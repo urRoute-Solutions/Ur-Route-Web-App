@@ -52,6 +52,18 @@ const serverSchema = z.object({
 
   // Anthropic (AI support chat)
   ANTHROPIC_API_KEY: z.string().optional(),
+
+  // Google OAuth (Sign in with Google)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  // Client-exposed (NEXT_PUBLIC_*) — also readable server-side; validated
+  // loosely here so getEnv() doesn't reject them when present in process.env.
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 // During `next build` and on the edge, secrets may not be present; only hard-fail

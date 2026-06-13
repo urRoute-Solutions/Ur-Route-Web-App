@@ -9,6 +9,7 @@ import { registerSchema, type RegisterInput } from "@/validators/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleButton } from "@/components/auth/google-button";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -35,6 +36,14 @@ export default function RegisterPage() {
       <div className="space-y-1">
         <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
         <p className="text-muted-foreground text-sm">Join urRoute and start earning rewards</p>
+      </div>
+
+      <GoogleButton redirectTo="/dashboard" />
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or register with email</span>
+        <span className="h-px flex-1 bg-border" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
