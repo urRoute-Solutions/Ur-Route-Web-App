@@ -1,0 +1,622 @@
+// ───────────────────────────────────────────────────────────────────────────
+// urRoute Prisma schema
+//
+// Design principles
+//  • Multi-tenant by `operatorId`: every operator-owned row carries the tenant
+//    key. Isolation is enforced in the repository layer (TenantRepository) and
+//    backstopped by Postgres RLS. Travelers (User) are GLOBAL — they ride many
+//    operators — so loyalty state lives in the per-tenant RewardProgress row,
+//    not on the user.
+//  • Money is stored in integer paise (₹1 = 100) to avoid float drift.
+//  • Soft-delete via `deletedAt` only where audit/history matters.
+// ───────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (PgBouncer) — runtime
+  directUrl = env("DIRECT_URL") // direct — migrations
+}
+
+// ─────────────────────────────── Enums ─────────────────────────────────────
+
+enum Role {
+  ADMIN
+  OPERATOR
+  TRAVELER
+}
+
+enum OperatorStatus {
+  PENDING // awaiting admin approval
+  ACTIVE
+  SUSPENDED
+}
+
+/// Loyalty tiers. Cycle: L1 → L2 → L3 → L4 → back to L3 (never resets).
+enum LoyaltyLevel {
+  LEVEL_1 // Welcome
+  LEVEL_2 // Stay
+  LEVEL_3 // Loyalty
+  LEVEL_4 // Champion
+}
+
+/// Per-(user,operator) progress state. FROZEN when the traveler is riding a
+/// different operator; ACTIVE otherwise. Frozen tracks are paused, not reset.
+enum ProgressStatus {
+  ACTIVE
+  FROZEN
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum TripStatus {
+  SCHEDULED
+  DEPARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING // created, awaiting payment
+  CONFIRMED // paid
+  CANCELLED
+  COMPLETED // trip finished — triggers loyalty progress
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  BOOKING_PAYMENT
+  REFUND
+  REWARD_CREDIT
+  POINTS_EARN
+  POINTS_REDEEM
+}
+
+enum RewardStatus {
+  LOCKED
+  UNLOCKED
+  REDEEMED
+  EXPIRED
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  READ
+  FAILED
+}
+
+enum SeatType {
+  SEATER
+  SLEEPER
+}
+
+enum SeatDeck {
+  LOWER
+  UPPER
+}
+
+// ─────────────────────────────── Identity ──────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  fullName      String
+  passwordHash  String
+  role          Role      @default(TRAVELER)
+  avatarUrl     String?
+  referralCode  String    @unique
+  referredById  String?
+  referredBy    User?     @relation("Referral", fields: [referredById], references: [id])
+  referrals     User[]    @relation("Referral")
+  emailVerified Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  birthday      DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  // An OPERATOR-role user owns exactly one Operator (the tenant they manage).
+  operator       Operator?
+  bookings       Booking[]
+  rewardProgress RewardProgress[]
+  rewardHistory  RewardHistory[]
+  notifications  Notification[]
+  userBadges     UserBadge[]
+  transactions   Transaction[]
+  payments       Payment[]
+  refreshTokens  RefreshToken[]
+  sessions       Session[]
+  favorites      Favorite[]
+  reviews        Review[]
+  auditLogs      AuditLog[]
+
+  @@index([role])
+  @@index([referredById])
+  @@map("users")
+}
+
+/// The tenant. All operator-owned data hangs off `operatorId`.
+model Operator {
+  id           String         @id @default(cuid())
+  ownerId      String         @unique // the OPERATOR-role User who manages it
+  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String         @unique
+  description  String?
+  logoUrl      String?
+  contactEmail String
+  contactPhone String?
+  address      String?
+  city         String?
+  status       OperatorStatus @default(PENDING)
+  rating       Float          @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  routes         Route[]
+  trips          Trip[]
+  bookings       Booking[]
+  offerTemplates OfferTemplate[]
+  perks          Perk[]
+  rewardProgress RewardProgress[]
+  rewardHistory  RewardHistory[]
+  reviews        Review[]
+  favorites      Favorite[]
+  analytics      AnalyticsDaily[]
+
+  @@index([status])
+  @@index([city])
+  @@map("operators")
+}
+
+// ───────────────────────────── Inventory ───────────────────────────────────
+
+model Route {
+  id             String    @id @default(cuid())
+  operatorId     String
+  operator       Operator  @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  origin         String
+  destination    String
+  distanceKm     Int?
+  durationMin    Int?
+  boardingPoints Json      @default("[]") // [{name, landmark, time}]
+  droppingPoints Json      @default("[]")
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  trips Trip[]
+
+  @@index([operatorId])
+  @@index([operatorId, origin, destination])
+  @@map("routes")
+}
+
+model Trip {
+  id             String     @id @default(cuid())
+  operatorId     String
+  operator       Operator   @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  routeId        String
+  route          Route      @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  busName        String
+  seatType       SeatType   @default(SLEEPER)
+  layout         String     @default("2+1")
+  totalSeats     Int
+  availableSeats Int
+  basePriceMinor Int // paise
+  departureAt    DateTime
+  arrivalAt      DateTime
+  amenities      Json       @default("[]") // ["CCTV","Water","Reading Lamp"]
+  status         TripStatus @default(SCHEDULED)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  bookings Booking[]
+  seats    Seat[]
+
+  @@index([operatorId])
+  @@index([routeId])
+  @@index([departureAt])
+  @@index([operatorId, status, departureAt])
+  @@map("trips")
+}
+
+model Seat {
+  id         String   @id @default(cuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  label      String // e.g. "L1", "U3"
+  deck       SeatDeck @default(LOWER)
+  priceMinor Int
+  isBooked   Boolean  @default(false)
+  isLadies   Boolean  @default(false)
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  @@unique([tripId, label])
+  @@index([tripId, isBooked])
+  @@map("seats")
+}
+
+// ───────────────────────────── Bookings ────────────────────────────────────
+
+model Booking {
+  id         String        @id @default(cuid())
+  operatorId String
+  operator   Operator      @relation(fields: [operatorId], references: [id])
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  tripId     String
+  trip       Trip          @relation(fields: [tripId], references: [id])
+  pnr        String        @unique
+  status     BookingStatus @default(PENDING)
+
+  // Fare breakdown (all minor units / paise)
+  baseFareMinor   Int
+  discountMinor   Int @default(0)
+  groupBonusMinor Int @default(0)
+  taxMinor        Int @default(0)
+  totalFareMinor  Int
+
+  // Loyalty linkage
+  appliedLevel   LoyaltyLevel?
+  appliedOfferId String?
+  appliedOffer   OfferTemplate? @relation(fields: [appliedOfferId], references: [id])
+  passengerCount Int            @default(1)
+
+  boardingPoint Json?
+  droppingPoint Json?
+  passengers    Json  @default("[]") // [{name, age, gender, seat}]
+
+  cancelledAt DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  seats         Seat[]
+  payment       Payment?
+  transactions  Transaction[]
+  rewardHistory RewardHistory[]
+  review        Review?
+
+  @@index([operatorId])
+  @@index([userId])
+  @@index([tripId])
+  @@index([userId, status])
+  @@index([operatorId, status, createdAt])
+  @@map("bookings")
+}
+
+// ───────────────────────── Loyalty configuration ───────────────────────────
+
+/// Operator-defined offer for a loyalty level. The reward engine reads these to
+/// compute discounts; it never hardcodes values. One per (operator, level).
+model OfferTemplate {
+  id          String       @id @default(cuid())
+  operatorId  String
+  operator    Operator     @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  level       LoyaltyLevel
+  title       String
+  description String?
+
+  discountType    DiscountType @default(PERCENTAGE)
+  percentage      Float? // when PERCENTAGE (e.g. 11.0)
+  flatAmountMinor Int? // when FLAT
+  maxCapMinor     Int? // ceiling on discount
+
+  // Group bonus: extra % per additional traveler, capped.
+  groupBonusPerHead  Float @default(0)
+  groupBonusMaxHeads Int   @default(0)
+
+  // Progression: trip at which this level unlocks / the reward becomes claimable.
+  unlockTripNumber Int // L2=2, L3=8(unlock), L4=12 ...
+  rewardTripNumber Int // trip on which reward appears (L2=4 ...)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  perks    Perk[]
+  bookings Booking[]
+
+  @@unique([operatorId, level])
+  @@index([operatorId])
+  @@map("offer_templates")
+}
+
+/// A perk attached to an offer (VIP badge, priority support, free cancellation …).
+model Perk {
+  id         String         @id @default(cuid())
+  operatorId String
+  operator   Operator       @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  offerId    String?
+  offer      OfferTemplate? @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  key        String // machine key: "FREE_CANCELLATION"
+  label      String // human label: "Free cancellation"
+  icon       String?
+  createdAt  DateTime       @default(now())
+
+  @@index([operatorId])
+  @@index([offerId])
+  @@map("perks")
+}
+
+/// Per-(user, operator) loyalty progress. THE freeze/cycle state lives here.
+model RewardProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operatorId String
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  currentLevel   LoyaltyLevel   @default(LEVEL_1)
+  completedTrips Int            @default(0) // monotonic — never decreases
+  status         ProgressStatus @default(ACTIVE)
+  cycleCount     Int            @default(0) // times the L4→L3 cycle has wrapped
+  lastTripAt     DateTime?
+  frozenAt       DateTime?
+  resumedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, operatorId])
+  @@index([userId])
+  @@index([operatorId, currentLevel])
+  @@map("reward_progress")
+}
+
+/// Append-only ledger of reward lifecycle events (unlocked / redeemed / expired).
+model RewardHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operatorId String
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  level      LoyaltyLevel
+  status     RewardStatus @default(UNLOCKED)
+  title      String
+  valueMinor Int          @default(0) // realized discount value, if any
+  metadata   Json         @default("{}")
+  redeemedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@index([userId])
+  @@index([operatorId])
+  @@index([userId, status])
+  @@map("reward_history")
+}
+
+// ───────────────────────────── Gamification ────────────────────────────────
+
+model Badge {
+  id          String   @id @default(cuid())
+  key         String   @unique // "VIP", "CHAMPION", "FIRST_RIDE"
+  name        String
+  description String?
+  iconUrl     String?
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@map("user_badges")
+}
+
+// ─────────────────────────── Money & ledger ────────────────────────────────
+
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String        @unique
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  amountMinor       Int
+  currency          String        @default("INR")
+  status            PaymentStatus @default(CREATED)
+  provider          String        @default("razorpay")
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?       @unique
+  razorpaySignature String?
+  failureReason     String?
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
+}
+
+/// Generic value ledger (money + loyalty points).
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  bookingId   String?
+  booking     Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  type        TransactionType
+  amountMinor Int             @default(0) // money component
+  points      Int             @default(0) // loyalty points component
+  description String?
+  metadata    Json            @default("{}")
+  createdAt   DateTime        @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([userId, createdAt])
+  @@map("transactions")
+}
+
+// ──────────────────────────── Notifications ────────────────────────────────
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel @default(IN_APP)
+  type      String // "TRIP_COMPLETED", "REWARD_UNLOCKED" ...
+  title     String
+  body      String
+  data      Json                @default("{}")
+  status    NotificationStatus  @default(PENDING)
+  readAt    DateTime?
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ──────────────────────────── Engagement ───────────────────────────────────
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operatorId String
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, operatorId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  operatorId String
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId  String?  @unique
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  rating     Int // 1..5
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([operatorId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+// ─────────────────────── Sessions / auth tokens ────────────────────────────
+
+/// Refresh tokens are stored HASHED (sha-256). Rotation: each refresh issues a
+/// new row and revokes the old via `replacedById`, enabling reuse detection.
+model RefreshToken {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique
+  familyId     String // rotation family — reuse of a revoked token nukes the family
+  userAgent    String?
+  ip           String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent    String?
+  ip           String?
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ──────────────────────────── Observability ────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  operatorId String? // tenant context, when applicable
+  action     String // "USER_LOGIN", "OFFER_UPDATED" ...
+  entity     String? // "Booking", "OfferTemplate"
+  entityId   String?
+  ip         String?
+  userAgent  String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([operatorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Pre-aggregated daily analytics per operator (write-side feeds it; read-side
+/// dashboards query it instead of scanning bookings). Platform-wide rows use a
+/// null operatorId.
+model AnalyticsDaily {
+  id              String    @id @default(cuid())
+  operatorId      String?
+  operator        Operator? @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  date            DateTime  @db.Date
+  bookingsCount   Int       @default(0)
+  revenueMinor    Int       @default(0)
+  newUsers        Int       @default(0)
+  activeUsers     Int       @default(0)
+  rewardsRedeemed Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([operatorId, date])
+  @@index([date])
+  @@map("analytics_daily")
+}

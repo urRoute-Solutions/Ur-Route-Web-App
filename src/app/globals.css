@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * urRoute design tokens.
+ * Palette sourced from the urRoute design PDF (colors only):
+ *   brand  = royal blue   (identity, nav, login splash)
+ *   action = green        (primary CTAs: Search / Pay / Proceed)
+ *   reward = gold         (coins, points, loyalty surfaces)
+ * Everything else follows the shadcn slate base scale.
+ */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* primary == brand blue */
+    --primary: 226 64% 38%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 226 64% 38%;
+
+    /* brand tokens */
+    --brand: 226 64% 38%;
+    --brand-foreground: 210 40% 98%;
+    --action: 142 60% 38%;
+    --action-foreground: 0 0% 100%;
+    --reward: 38 92% 52%;
+    --reward-foreground: 26 50% 15%;
+
+    --radius: 0.6rem;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 222 80% 62%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 222 80% 62%;
+
+    --brand: 222 80% 62%;
+    --brand-foreground: 222 47% 11%;
+    --action: 142 55% 45%;
+    --action-foreground: 0 0% 100%;
+    --reward: 38 90% 55%;
+    --reward-foreground: 26 50% 15%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
