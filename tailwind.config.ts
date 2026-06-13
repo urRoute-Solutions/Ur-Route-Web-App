@@ -71,6 +71,13 @@ const config: Config = {
           DEFAULT: "hsl(var(--reward))",
           foreground: "hsl(var(--reward-foreground))",
         },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          active: "hsl(var(--sidebar-active))",
+          hover: "hsl(var(--sidebar-hover))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

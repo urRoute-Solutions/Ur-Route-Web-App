@@ -16,7 +16,7 @@ export default async function OperatorLayout({ children }: { children: React.Rea
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-background">
       <OperatorNav
         user={{ fullName: user.fullName, email: user.email }}
         operatorName={operator?.name}

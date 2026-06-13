@@ -9,7 +9,6 @@ import { registerSchema, type RegisterInput } from "@/validators/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,49 +31,99 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>Join urRoute and start earning rewards</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="fullName">Full name</Label>
-              <Input id="fullName" {...register("fullName")} placeholder="Ada Lovelace" />
-              {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} placeholder="ada@example.com" />
-              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="phone">Phone (optional)</Label>
-              <Input id="phone" {...register("phone")} placeholder="+91 98765 43210" />
-              {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password")} placeholder="••••••••" />
-              {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="referralCode">Referral code (optional)</Label>
-              <Input id="referralCode" {...register("referralCode")} placeholder="ABCD12" />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account…" : "Create account"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-slate-500">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium hover:underline">Sign in</Link>
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-7">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
+        <p className="text-muted-foreground text-sm">Join urRoute and start earning rewards</p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="fullName">Full name</Label>
+          <Input
+            id="fullName"
+            {...register("fullName")}
+            placeholder="Ada Lovelace"
+            className="h-11"
+          />
+          {errors.fullName && (
+            <p className="text-xs text-destructive">{errors.fullName.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            {...register("email")}
+            placeholder="ada@example.com"
+            className="h-11"
+          />
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Phone <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <Input
+            id="phone"
+            {...register("phone")}
+            placeholder="+91 98765 43210"
+            className="h-11"
+          />
+          {errors.phone && (
+            <p className="text-xs text-destructive">{errors.phone.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            {...register("password")}
+            placeholder="Min. 8 characters"
+            className="h-11"
+          />
+          {errors.password && (
+            <p className="text-xs text-destructive">{errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="referralCode">Referral code <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <Input
+            id="referralCode"
+            {...register("referralCode")}
+            placeholder="ABCD12"
+            className="h-11"
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          variant="action"
+          className="w-full h-11 font-semibold"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Creating account…" : "Create account"}
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 }

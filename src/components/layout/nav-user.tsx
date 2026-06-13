@@ -10,14 +10,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavUserProps {
   name: string;
   email: string;
   profileHref?: string;
+  dark?: boolean;
 }
 
-export function NavUser({ name, email, profileHref = "/profile" }: NavUserProps) {
+export function NavUser({ name, email, profileHref = "/profile", dark = false }: NavUserProps) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -36,15 +38,31 @@ export function NavUser({ name, email, profileHref = "/profile" }: NavUserProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+        <button
+          className={cn(
+            "flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors w-full text-left",
+            dark
+              ? "hover:bg-sidebar-hover text-sidebar-foreground"
+              : "hover:bg-muted text-foreground"
+          )}
+        >
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarFallback
+              className={cn(
+                "text-xs font-bold",
+                dark ? "bg-sidebar-active text-white" : "bg-primary text-primary-foreground"
+              )}
+            >
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden md:block text-left">
-            <p className="text-sm font-medium leading-none">{name}</p>
-            <p className="text-xs text-muted-foreground truncate max-w-[140px]">{email}</p>
+          <div className="hidden md:block min-w-0">
+            <p className={cn("text-sm font-medium leading-none truncate", dark ? "text-white" : "text-foreground")}>
+              {name}
+            </p>
+            <p className={cn("text-xs truncate max-w-[140px] mt-0.5", dark ? "text-sidebar-foreground/60" : "text-muted-foreground")}>
+              {email}
+            </p>
           </div>
         </button>
       </DropdownMenuTrigger>
@@ -56,7 +74,10 @@ export function NavUser({ name, email, profileHref = "/profile" }: NavUserProps)
           <Settings className="mr-2 h-4 w-4" /> Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+        <DropdownMenuItem
+          onClick={handleLogout}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
