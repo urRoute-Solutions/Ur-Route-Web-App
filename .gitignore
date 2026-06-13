@@ -39,3 +39,6 @@ logs/
 # vercel / turbo
 .vercel
 .turbo
+
+# claude code internals
+.claude/
