@@ -4,7 +4,7 @@ import { ok, handleError } from "@/lib/http";
 import { AppError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { setAuthCookies } from "@/lib/auth/cookies";
-import { firebaseAuth } from "@/lib/firebase-admin";
+import { getFirebaseAdmin } from "@/lib/firebase-admin";
 import { resolveExternalLoginUseCase } from "@/usecases/auth/oauth.usecase";
 import { requestMeta, clientIp } from "@/utils/request";
 
@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   try {
     await enforceRateLimit("auth", `phone:${clientIp(req)}`);
 
-    if (!firebaseAuth) {
+    const firebaseAdmin = getFirebaseAdmin();
+    if (!firebaseAdmin) {
       throw new AppError(
         "Phone sign-in is not configured",
         503,
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     let phoneNumber: string | undefined;
     try {
-      const decoded = await firebaseAuth.verifyIdToken(firebaseToken);
+      const decoded = await firebaseAdmin.verifyIdToken(firebaseToken);
       phoneNumber = decoded.phone_number;
     } catch {
       throw new UnauthorizedError("Invalid phone verification token");
