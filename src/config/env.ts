@@ -49,6 +49,9 @@ const serverSchema = z.object({
 
   // PostHog
   POSTHOG_API_KEY: z.string().optional(),
+
+  // Anthropic (AI support chat)
+  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 // During `next build` and on the edge, secrets may not be present; only hard-fail

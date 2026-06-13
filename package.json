@@ -21,8 +21,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.1.0",
+    "@radix-ui/react-accordion": "^1.2.13",
     "@radix-ui/react-avatar": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-dropdown-menu": "^2.1.17",
@@ -46,6 +48,7 @@
     "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "firebase-admin": "^14.0.0",
+    "framer-motion": "^12.40.0",
     "ioredis": "^5.11.1",
     "jose": "^5.9.6",
     "lucide-react": "^0.469.0",

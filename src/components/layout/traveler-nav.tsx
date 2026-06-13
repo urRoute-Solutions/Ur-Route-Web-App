@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Bus, LayoutDashboard, Gift, Search, Menu, Ticket } from "lucide-react";
+import { Bus, LayoutDashboard, Gift, Search, Menu, Ticket, Mail } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavUser } from "./nav-user";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -81,6 +81,18 @@ function MobileNavLinks() {
           </Link>
         );
       })}
+      <Link
+        href="/contact"
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+          pathname.startsWith("/contact")
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <Mail className="h-4 w-4 shrink-0" />
+        Contact
+      </Link>
     </nav>
   );
 }
