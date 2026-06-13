@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
+import { Geist } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+
 export const metadata: Metadata = {
-  title: "urRoute — Loyalty for Bus Operators",
-  description:
-    "B2B2C loyalty platform helping bus operators improve traveler retention through gamified rewards.",
+  title: { default: "urRoute", template: "%s | urRoute" },
+  description: "B2B2C loyalty platform helping bus operators improve traveler retention through gamified rewards.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+      <body className={`${geist.variable} font-sans antialiased`}>
+        {children}
+        <Toaster richColors position="top-right" />
+      </body>
     </html>
   );
 }

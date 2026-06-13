@@ -61,6 +61,17 @@ export const bookingRepository = {
     return prisma.booking.update({ where: { id }, data });
   },
 
+  listAll(params: { page: number; pageSize: number }): Promise<[Booking[], number]> {
+    return Promise.all([
+      prisma.booking.findMany({
+        skip: (params.page - 1) * params.pageSize,
+        take: params.pageSize,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.booking.count(),
+    ]);
+  },
+
   countCompletedForUser(userId: string, operatorId: string): Promise<number> {
     return prisma.booking.count({
       where: { userId, operatorId, status: "COMPLETED" },
