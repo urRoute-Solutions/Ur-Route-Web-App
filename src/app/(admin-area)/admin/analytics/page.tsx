@@ -20,7 +20,7 @@ export default async function AdminAnalyticsPage() {
   const confirmedStats = bookingStats.find((s) => s.status === "CONFIRMED");
   const completedStats = bookingStats.find((s) => s.status === "COMPLETED");
   const totalRevenue = ((confirmedStats?._sum.totalFareMinor ?? 0) + (completedStats?._sum.totalFareMinor ?? 0));
-  const totalBookings = bookingStats.reduce((s, b) => s + b._count.id, 0);
+  const totalBookings = bookingStats.reduce((s: number, b) => s + b._count.id, 0);
 
   return (
     <div className="p-6 max-w-4xl space-y-8">
