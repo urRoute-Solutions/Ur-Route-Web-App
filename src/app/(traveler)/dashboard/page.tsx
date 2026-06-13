@@ -1,140 +1,202 @@
 import { requireRole } from "@/lib/auth/session";
+import { userRepository } from "@/repositories/user.repository";
 import { bookingRepository } from "@/repositories/booking.repository";
 import { rewardProgressRepository } from "@/repositories/reward-progress.repository";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { ArrowRight, Bus, Gift, MapPin } from "lucide-react";
+import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users } from "lucide-react";
 
-const LEVEL_META: Record<string, { label: string; next: string; max: number; color: string }> = {
-  LEVEL_1: { label: "Welcome", next: "Stay", max: 4, color: "bg-slate-400" },
-  LEVEL_2: { label: "Stay", next: "Loyalty", max: 8, color: "bg-blue-500" },
-  LEVEL_3: { label: "Loyalty", next: "Champion", max: 12, color: "bg-purple-500" },
-  LEVEL_4: { label: "Champion", next: "Champion", max: 12, color: "bg-amber-500" },
+const LEVEL_META: Record<string, { label: string; next: string; max: number; bar: string; badge: string }> = {
+  LEVEL_1: { label: "Welcome", next: "Stay",     max: 4,  bar: "bg-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" },
+  LEVEL_2: { label: "Stay",    next: "Loyalty",  max: 8,  bar: "bg-blue-500",  badge: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" },
+  LEVEL_3: { label: "Loyalty", next: "Champion", max: 12, bar: "bg-purple-500",badge: "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300" },
+  LEVEL_4: { label: "Champion",next: "Champion", max: 12, bar: "bg-amber-500", badge: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300" },
 };
+
+function statusVariant(status: string): "default" | "destructive" | "secondary" | "outline" {
+  if (status === "CONFIRMED") return "default";
+  if (status === "CANCELLED") return "destructive";
+  return "secondary";
+}
+
+function greetingPart() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 export default async function DashboardPage() {
   const principal = await requireRole("TRAVELER");
 
-  const [[bookings, totalBookings], allProgress] = await Promise.all([
+  const [user, [bookings, totalBookings], allProgress] = await Promise.all([
+    userRepository.findById(principal.userId),
     bookingRepository.listByUser(principal.userId, { page: 1, pageSize: 5 }),
     rewardProgressRepository.listByUser(principal.userId),
   ]);
 
   const activeProgress = allProgress.filter((p) => p.status === "ACTIVE");
+  const totalTrips = activeProgress.reduce((s, p) => s + p.completedTrips, 0);
+  const firstName = user?.fullName?.split(" ")[0] ?? "there";
 
   return (
-    <div className="p-6 max-w-4xl space-y-8">
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-2xl font-bold">{totalBookings}</p>
-            <p className="text-sm text-muted-foreground">Total bookings</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-2xl font-bold">{allProgress.length}</p>
-            <p className="text-sm text-muted-foreground">Operators ridden</p>
-          </CardContent>
-        </Card>
-        <Card className="col-span-2 md:col-span-1">
-          <CardContent className="pt-4">
-            <p className="text-2xl font-bold">{activeProgress.reduce((s, p) => s + p.completedTrips, 0)}</p>
-            <p className="text-sm text-muted-foreground">Trips completed</p>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-background">
+      {/* ── Greeting banner ──────────────────────────────────── */}
+      <div className="bg-sidebar text-white">
+        <div className="container py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-white/60 text-sm mb-1">{greetingPart()}</p>
+              <h1 className="text-2xl font-extrabold tracking-tight">
+                {firstName} 👋
+              </h1>
+              <p className="text-white/50 text-sm mt-1">
+                {totalBookings > 0
+                  ? `You have ${totalBookings} booking${totalBookings !== 1 ? "s" : ""} so far.`
+                  : "Start your first journey today."}
+              </p>
+            </div>
+            <Link href="/search">
+              <Button variant="action" className="font-semibold gap-2 shrink-0">
+                <Search className="h-4 w-4" />
+                Search Buses
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Loyalty progress */}
-      {activeProgress.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-reward" /> Loyalty Progress</h2>
-            <Link href="/rewards" className="text-sm text-primary hover:underline flex items-center gap-1">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            {activeProgress.map((p) => {
-              const meta = LEVEL_META[p.currentLevel];
-              const pct = meta ? Math.min(100, (p.completedTrips / meta.max) * 100) : 0;
-              return (
-                <Card key={p.operatorId}>
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="font-semibold">{meta?.label ?? p.currentLevel}</Badge>
-                      <span className="text-xs text-muted-foreground">{p.completedTrips} trips</span>
-                    </div>
-                    <Progress value={pct} className="h-2" />
-                    <p className="text-xs text-muted-foreground">
-                      {meta && p.currentLevel !== "LEVEL_4"
-                        ? `${meta.max - p.completedTrips} more trips to ${meta.next}`
-                        : "Champion — cycling!"}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <div className="container py-8 space-y-8">
 
-      {/* CTA if no progress */}
-      {allProgress.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center space-y-3">
-            <Bus className="h-10 w-10 mx-auto text-muted-foreground/40" />
-            <p className="font-medium">Start your first journey</p>
-            <p className="text-sm text-muted-foreground">Book a bus and start earning loyalty rewards.</p>
-            <Link href="/search"><Button>Search buses</Button></Link>
-          </CardContent>
-        </Card>
-      )}
-
-      <Separator />
-
-      {/* Recent bookings */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><Bus className="h-5 w-5" /> Recent Bookings</h2>
-          <Link href="/bookings" className="text-sm text-primary hover:underline flex items-center gap-1">
-            All bookings <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        <div className="space-y-3">
-          {bookings.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-6">No bookings yet.</p>
-          )}
-          {bookings.map((b) => (
-            <Link key={b.id} href={`/bookings/${b.id}`}>
-              <Card className="hover:shadow-sm transition-shadow cursor-pointer">
-                <CardContent className="flex items-center justify-between py-3 px-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <MapPin className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-mono text-sm font-medium">{b.pnr}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-sm">₹{(b.totalFareMinor / 100).toFixed(0)}</p>
-                    <Badge variant={b.status === "CONFIRMED" ? "default" : b.status === "CANCELLED" ? "destructive" : "secondary"} className="text-xs">
-                      {b.status}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+        {/* ── Stats strip ──────────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: Ticket, label: "Total Bookings", value: totalBookings, color: "text-primary" },
+            { icon: Bus, label: "Trips Completed", value: totalTrips, color: "text-action" },
+            { icon: Users, label: "Operators Ridden", value: allProgress.length, color: "text-blue-500" },
+            { icon: Gift, label: "Reward Levels Active", value: activeProgress.length, color: "text-amber-500" },
+          ].map(({ icon: Icon, label, value, color }) => (
+            <div
+              key={label}
+              className="bg-white dark:bg-card border border-border rounded-xl p-5 flex items-start gap-4"
+            >
+              <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0 ${color}`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-extrabold leading-none">{value}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-tight">{label}</p>
+              </div>
+            </div>
           ))}
         </div>
-      </section>
+
+        {/* ── Loyalty progress ─────────────────────────────────── */}
+        {activeProgress.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <Gift className="h-4 w-4 text-amber-500" />
+                Loyalty Progress
+              </h2>
+              <Link href="/rewards" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {activeProgress.map((p) => {
+                const meta = LEVEL_META[p.currentLevel];
+                const pct = meta ? Math.min(100, (p.completedTrips / meta.max) * 100) : 0;
+                return (
+                  <div key={p.operatorId} className="bg-white dark:bg-card border border-border rounded-xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meta?.badge ?? "bg-muted text-muted-foreground"}`}>
+                        {meta?.label ?? p.currentLevel}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{p.completedTrips} / {meta?.max ?? "?"} trips</span>
+                    </div>
+                    <Progress value={pct} className={`h-2 ${meta?.bar ?? ""}`} />
+                    <p className="text-xs text-muted-foreground">
+                      {meta && p.currentLevel !== "LEVEL_4"
+                        ? `${Math.max(0, meta.max - p.completedTrips)} more trips to ${meta.next}`
+                        : "Champion — you're at the top!"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ── CTA if no loyalty progress ───────────────────────── */}
+        {allProgress.length === 0 && (
+          <div className="bg-white dark:bg-card border border-dashed border-border rounded-xl p-10 text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+              <Bus className="h-7 w-7 text-muted-foreground/40" />
+            </div>
+            <p className="font-bold">Start your first journey</p>
+            <p className="text-sm text-muted-foreground">Book a bus and start earning loyalty rewards.</p>
+            <Link href="/search">
+              <Button variant="action" className="mt-1">Search buses</Button>
+            </Link>
+          </div>
+        )}
+
+        {/* ── Recent bookings ───────────────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Recent Bookings
+            </h2>
+            <Link href="/bookings" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+              All bookings <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          {bookings.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No bookings yet. Book your first bus!</p>
+          ) : (
+            <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
+              {bookings.map((b, idx) => (
+                <Link
+                  key={b.id}
+                  href={`/bookings/${b.id}`}
+                  className={`flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer ${
+                    idx !== bookings.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Bus className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-mono font-semibold text-sm">{b.pnr}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {new Date(b.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric", month: "short", year: "numeric"
+                        })} · {b.passengerCount} pax
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="font-bold text-sm">₹{(b.totalFareMinor / 100).toFixed(0)}</p>
+                    </div>
+                    <Badge variant={statusVariant(b.status)} className="text-[10px]">
+                      {b.status}
+                    </Badge>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

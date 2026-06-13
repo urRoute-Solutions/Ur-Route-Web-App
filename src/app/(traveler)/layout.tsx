@@ -12,9 +12,9 @@ export default async function TravelerLayout({ children }: { children: React.Rea
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <TravelerNav user={{ fullName: user.fullName, email: user.email }} />
-      <main className="flex-1 min-w-0 md:pt-0 pt-14">{children}</main>
+      <main>{children}</main>
     </div>
   );
 }
