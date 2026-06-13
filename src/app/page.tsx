@@ -127,7 +127,7 @@ export default function HomePage() {
                 </Button>
               </Link>
               <Link href="/search">
-                <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+                <Button size="lg" variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white hover:border-white/50">
                   Search buses
                 </Button>
               </Link>
@@ -227,7 +227,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+              <Button size="lg" variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white hover:border-white/50">
                 Sign in
               </Button>
             </Link>
