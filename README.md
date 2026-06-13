@@ -87,9 +87,9 @@ traveler books with another operator, and resumes on return. See
 
 - **M1** Foundation — scaffold + Prisma schema ✅
 - **M2** Auth + RBAC + Security ✅
-- M3 Operators / Routes / Bookings
-- M4 Reward Engine
-- M5 Events / Notifications / Payments
-- M6 Analytics / Admin
-- M7 Frontend dashboards
-- M8 Tests / Monitoring / Docker / Deploy
+- **M3** Operators / Routes / Trips / Bookings (transactional, seat-locking) ✅
+- **M4** Reward Engine (pure, dependency-free; offer templates; freeze/resume) ✅
+- **M5** Payments (Razorpay + webhook) + Notifications (Resend email + in-app) + BullMQ queues ✅
+- **M6** Analytics (daily aggregation cron) + Admin APIs ✅
+- **M7** Frontend — auth pages, traveler (search, dashboard, rewards), operator (dashboard, routes, trips, bookings, offers), admin panel ✅
+- **M8** Vitest unit tests (reward engine), Docker + docker-compose, Vercel cron config ✅

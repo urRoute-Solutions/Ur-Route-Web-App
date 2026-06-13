@@ -24,6 +24,31 @@ const serverSchema = z.object({
 
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  // Razorpay
+  RAZORPAY_KEY_ID: z.string().min(1).default("rzp_test_placeholder"),
+  RAZORPAY_KEY_SECRET: z.string().min(1).default("placeholder"),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1).default("placeholder"),
+
+  // Resend (email)
+  RESEND_API_KEY: z.string().min(1).default("re_placeholder"),
+  EMAIL_FROM: z.string().email().default("noreply@urroute.in"),
+
+  // Redis (BullMQ — direct ioredis, not Upstash)
+  REDIS_URL: z.string().url().default("redis://localhost:6379"),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+
+  // Firebase Admin (FCM)
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
+
+  // PostHog
+  POSTHOG_API_KEY: z.string().optional(),
 });
 
 // During `next build` and on the edge, secrets may not be present; only hard-fail
@@ -42,3 +67,10 @@ export function getEnv(): z.infer<typeof serverSchema> {
   cached = parsed.data;
   return cached;
 }
+
+/** Convenience alias for callers that prefer `env.FOO` syntax. */
+export const env = new Proxy({} as z.infer<typeof serverSchema>, {
+  get(_target, prop: string) {
+    return getEnv()[prop as keyof z.infer<typeof serverSchema>];
+  },
+});
