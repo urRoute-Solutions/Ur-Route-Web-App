@@ -6,14 +6,19 @@ import { getAuth } from "firebase/auth";
  * NEXT_PUBLIC_* so they're inlined into the client bundle. The resulting ID
  * token is verified server-side by firebase-admin before we issue our own JWT.
  */
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+export function getFirebaseClientAuth() {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) return null;
 
-const app: FirebaseApp =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
+  const app: FirebaseApp =
+    getApps().length === 0
+      ? initializeApp({
+          apiKey,
+          authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+          appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+        })
+      : getApps()[0]!;
 
-export const firebaseClientAuth = getAuth(app);
+  return getAuth(app);
+}

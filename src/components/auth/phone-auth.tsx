@@ -6,7 +6,7 @@ import {
   signInWithPhoneNumber,
   type ConfirmationResult,
 } from "firebase/auth";
-import { firebaseClientAuth } from "@/lib/firebase-client";
+import { getFirebaseClientAuth } from "@/lib/firebase-client";
 import { OtpInput } from "./otp-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,17 +43,22 @@ export function PhoneAuth({
       toast.error("Enter a valid Indian number: +91XXXXXXXXXX");
       return;
     }
+    const auth = getFirebaseClientAuth();
+    if (!auth) {
+      toast.error("Phone login is not configured yet.");
+      return;
+    }
     setLoading(true);
     try {
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(
-          firebaseClientAuth,
+          auth,
           "recaptcha-container",
           { size: "invisible" },
         );
       }
       const result = await signInWithPhoneNumber(
-        firebaseClientAuth,
+        auth,
         phone,
         window.recaptchaVerifier,
       );
