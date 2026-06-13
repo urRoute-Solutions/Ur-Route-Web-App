@@ -470,14 +470,13 @@ export default function SearchPage() {
                     </div>
 
                     {/* Seat availability row */}
-                    <div className="flex items-center gap-3 mb-4 flex-wrap">
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
                       <span className={cn("text-[11px] font-semibold px-2.5 py-1 rounded-full", sc)}>
                         {trip.availableSeats} seat{trip.availableSeats !== 1 ? "s" : ""} left
                       </span>
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        💧 Water
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">📹 CCTV</span>
+                      <span className="text-[11px] text-muted-foreground px-2.5 py-1 rounded-full bg-muted/60">Water</span>
+                      <span className="text-[11px] text-muted-foreground px-2.5 py-1 rounded-full bg-muted/60">CCTV</span>
+                      <span className="text-[11px] text-muted-foreground px-2.5 py-1 rounded-full bg-muted/60">Pillow</span>
                     </div>
 
                     {/* Bottom row: level badge + price + CTA */}
