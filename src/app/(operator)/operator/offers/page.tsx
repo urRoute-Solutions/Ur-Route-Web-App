@@ -5,8 +5,19 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus, Tag, Settings2, Gift, Zap, CheckCircle, CircleDashed } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LoyaltyLevel } from "@prisma/client";
 
-const TIER_META = [
+const TIER_META: Array<{
+  level: LoyaltyLevel;
+  code: string;
+  name: string;
+  range: string;
+  desc: string;
+  gradient: string;
+  ringClass: string;
+  softBg: string;
+  textAccent: string;
+}> = [
   {
     level: "LEVEL_1",
     code: "L1",
