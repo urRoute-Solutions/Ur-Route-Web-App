@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Building2, BarChart3, Bus, Menu, HeadphonesIcon, UserCheck } from "lucide-react";
+import { LayoutDashboard, Building2, BarChart3, Bus, Menu, HeadphonesIcon, UserCheck, Activity } from "lucide-react";
 import { NavUser } from "@/components/layout/nav-user";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/support", label: "Support", icon: HeadphonesIcon },
   { href: "/admin/agents", label: "Agents", icon: UserCheck },
+  { href: "/admin/status", label: "Status Page", icon: Activity },
 ];
 
 function Logo() {

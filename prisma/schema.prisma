@@ -114,6 +114,27 @@ enum TicketStatus {
   CLOSED
 }
 
+enum ServiceHealth {
+  OPERATIONAL
+  DEGRADED
+  PARTIAL_OUTAGE
+  MAJOR_OUTAGE
+  MAINTENANCE
+}
+
+enum IncidentStatus {
+  INVESTIGATING
+  IDENTIFIED
+  MONITORING
+  RESOLVED
+}
+
+enum IncidentImpact {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
 enum TicketPriority {
   LOW
   MEDIUM
@@ -692,4 +713,73 @@ model AnalyticsDaily {
   @@unique([operatorId, date])
   @@index([date])
   @@map("analytics_daily")
+}
+
+// ─────────────────────────────── Status Page ───────────────────────────────
+
+model StatusService {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String?
+  currentStatus ServiceHealth @default(OPERATIONAL)
+  displayOrder  Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  dailyStats StatusDailyStat[]
+  incidents  StatusIncidentService[]
+
+  @@map("status_services")
+}
+
+model StatusIncident {
+  id         String         @id @default(cuid())
+  title      String
+  impact     IncidentImpact @default(MINOR)
+  status     IncidentStatus @default(INVESTIGATING)
+  resolvedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  updates  StatusIncidentUpdate[]
+  services StatusIncidentService[]
+
+  @@index([status, createdAt])
+  @@map("status_incidents")
+}
+
+model StatusIncidentUpdate {
+  id         String         @id @default(cuid())
+  incidentId String
+  incident   StatusIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  body       String
+  status     IncidentStatus
+  createdAt  DateTime       @default(now())
+
+  @@index([incidentId])
+  @@map("status_incident_updates")
+}
+
+model StatusIncidentService {
+  incidentId String
+  serviceId  String
+  incident   StatusIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  service    StatusService  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([incidentId, serviceId])
+  @@map("status_incident_services")
+}
+
+model StatusDailyStat {
+  id        String        @id @default(cuid())
+  serviceId String
+  service   StatusService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  date      DateTime      @db.Date
+  status    ServiceHealth @default(OPERATIONAL)
+  uptimePct Float         @default(100)
+
+  @@unique([serviceId, date])
+  @@index([date])
+  @@map("status_daily_stats")
 }
