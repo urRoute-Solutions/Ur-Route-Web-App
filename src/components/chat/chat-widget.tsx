@@ -8,7 +8,7 @@ type Message = { role: "user" | "assistant"; content: string };
 
 const GREETING: Message = {
   role: "assistant",
-  content: "Hi! 👋 I'm urRoute's AI assistant. How can I help you today?",
+  content: "Hi! I'm urRoute's AI assistant. How can I help you today?",
 };
 
 export function ChatWidget() {

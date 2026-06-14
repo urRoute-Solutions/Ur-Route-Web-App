@@ -38,8 +38,7 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <Card className="w-full max-w-sm text-center">
           <CardContent className="pt-6">
-            <p className="text-2xl mb-2">📬</p>
-            <p className="font-medium">Check your inbox</p>
+            <p className="font-semibold text-lg mb-2">Check your inbox</p>
             <p className="text-sm text-slate-500 mt-1">We sent a password reset link to your email.</p>
             <Link href="/login" className="mt-4 block text-sm font-medium hover:underline">Back to login</Link>
           </CardContent>

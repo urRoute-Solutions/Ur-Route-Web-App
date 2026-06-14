@@ -87,7 +87,7 @@ const STATS = [
   { value: "50+", label: "Bus Operators" },
   { value: "200+", label: "Routes" },
   { value: "10,000+", label: "Happy Riders" },
-  { value: "4.8★", label: "Avg Rating" },
+  { value: "4.8 / 5", label: "Avg Rating" },
 ];
 
 const HOW_IT_WORKS = [

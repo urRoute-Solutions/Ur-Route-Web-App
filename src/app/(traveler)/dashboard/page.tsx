@@ -50,7 +50,7 @@ export default async function DashboardPage() {
             <div>
               <p className="text-white/60 text-sm mb-1">{greetingPart()}</p>
               <h1 className="text-2xl font-extrabold tracking-tight">
-                {firstName} 👋
+                {firstName}
               </h1>
               <p className="text-white/50 text-sm mt-1">
                 {totalBookings > 0
