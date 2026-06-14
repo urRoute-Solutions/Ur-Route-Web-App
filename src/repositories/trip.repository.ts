@@ -34,32 +34,47 @@ export const tripRepository = {
     minSeats: number;
     page: number;
     pageSize: number;
-  }): Promise<[Trip[], number]> {
-    const dayStart = new Date(`${params.date}T00:00:00.000Z`);
-    const dayEnd = new Date(`${params.date}T23:59:59.999Z`);
+  }): Promise<[TripWithDetails[], number]> {
+    // Use local-midnight boundaries so searching "June 15" matches trips
+    // stored in any timezone offset.
+    const dayStart = new Date(`${params.date}T00:00:00`);
+    const dayEnd   = new Date(`${params.date}T23:59:59.999`);
 
     const where: Prisma.TripWhereInput = {
       route: {
-        origin: { contains: params.origin, mode: "insensitive" },
+        origin:      { contains: params.origin,      mode: "insensitive" },
         destination: { contains: params.destination, mode: "insensitive" },
-        isActive: true,
-        deletedAt: null,
+        isActive:    true,
+        deletedAt:   null,
       },
-      departureAt: { gte: dayStart, lte: dayEnd },
+      departureAt:    { gte: dayStart, lte: dayEnd },
       availableSeats: { gte: params.minSeats },
-      status: "SCHEDULED",
+      status:         "SCHEDULED",
     };
 
     return Promise.all([
       prisma.trip.findMany({
         where,
-        skip: (params.page - 1) * params.pageSize,
-        take: params.pageSize,
-        orderBy: { departureAt: "asc" },
-        include: { route: true },
-      }),
+        skip:      (params.page - 1) * params.pageSize,
+        take:      params.pageSize,
+        orderBy:   { departureAt: "asc" },
+        include: {
+          route:    true,
+          operator: { select: { id: true, name: true, rating: true, logoUrl: true, contactPhone: true } },
+        },
+      }) as Promise<TripWithDetails[]>,
       prisma.trip.count({ where }),
     ]);
+  },
+
+  async getPlaces(): Promise<{ origins: string[]; destinations: string[] }> {
+    const routes = await prisma.route.findMany({
+      where: { isActive: true, deletedAt: null },
+      select: { origin: true, destination: true },
+    });
+    const origins      = [...new Set(routes.map((r) => r.origin))].sort();
+    const destinations = [...new Set(routes.map((r) => r.destination))].sort();
+    return { origins, destinations };
   },
 
   listByOperator(
