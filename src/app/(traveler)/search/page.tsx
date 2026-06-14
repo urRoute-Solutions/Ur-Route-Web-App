@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X } from "lucide-react";
+import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
@@ -104,15 +104,18 @@ function PlaceInput({
   );
 }
 
-// ── Offer label helper ──────────────────────────────────────────────────────
-function offerLabel(offer: TripOffer): string {
-  if (offer.discountType === "PERCENTAGE" && offer.percentage) {
-    return `${offer.percentage}% off`;
-  }
-  if (offer.discountType === "FLAT" && offer.flatAmountMinor) {
-    return `₹${(offer.flatAmountMinor / 100).toFixed(0)} off`;
-  }
-  return "Offer available";
+// ── Helpers ─────────────────────────────────────────────────────────────────
+const LEVEL_META: Record<string, { emoji: string; color: string; bg: string; ring: string; label: string }> = {
+  LEVEL_1: { emoji: "🌱", label: "Level 1", color: "text-slate-700 dark:text-slate-300",  bg: "bg-slate-100 dark:bg-slate-800",   ring: "ring-slate-300 dark:ring-slate-600" },
+  LEVEL_2: { emoji: "🌟", label: "Level 2", color: "text-blue-700 dark:text-blue-300",    bg: "bg-blue-50 dark:bg-blue-900/30",   ring: "ring-blue-300 dark:ring-blue-600" },
+  LEVEL_3: { emoji: "💎", label: "Level 3", color: "text-purple-700 dark:text-purple-300",bg: "bg-purple-50 dark:bg-purple-900/30",ring: "ring-purple-300 dark:ring-purple-600" },
+  LEVEL_4: { emoji: "🏆", label: "Level 4", color: "text-amber-700 dark:text-amber-300",  bg: "bg-amber-50 dark:bg-amber-900/30", ring: "ring-amber-300 dark:ring-amber-600" },
+};
+
+function discountText(o: TripOffer): string {
+  if (o.discountType === "PERCENTAGE" && o.percentage) return `${o.percentage}% off every booking`;
+  if (o.discountType === "FLAT" && o.flatAmountMinor) return `₹${(o.flatAmountMinor / 100).toFixed(0)} flat off every booking`;
+  return "Special offer";
 }
 
 // ── Operator avatar ─────────────────────────────────────────────────────────
@@ -128,8 +131,72 @@ function OperatorAvatar({ name, logoUrl }: { name: string; logoUrl?: string | nu
   );
 }
 
+// ── Loyalty ladder panel ────────────────────────────────────────────────────
+function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
+  return (
+    <div className="mt-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
+      <div className="px-4 pt-3 pb-2 flex items-center gap-2 border-b border-primary/10">
+        <span className="text-sm font-extrabold text-primary">🎁 Loyalty Rewards Programme</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">Book more · Earn more · Save more</span>
+      </div>
+      <div className="divide-y divide-border/50">
+        {offers.map((offer, i) => {
+          const meta = LEVEL_META[offer.level] ?? LEVEL_META["LEVEL_1"]!;
+          const isFirst = i === 0;
+          return (
+            <div key={offer.level} className={cn("flex items-start gap-3 px-4 py-3", isFirst && "bg-primary/5")}>
+              {/* Level badge */}
+              <div className={cn("shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base ring-2 mt-0.5", meta.bg, meta.ring)}>
+                {meta.emoji}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={cn("text-xs font-black uppercase tracking-wider", meta.color)}>{meta.label} · {offer.title}</span>
+                  {isFirst && (
+                    <span className="text-[9px] font-bold bg-primary text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide">Starts now</span>
+                  )}
+                </div>
+                <p className={cn("text-sm font-bold mt-0.5", meta.color)}>{discountText(offer)}</p>
+                {offer.description && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{offer.description}</p>
+                )}
+                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                  {offer.groupBonusPerHead > 0 && (
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
+                      👥 +{offer.groupBonusPerHead}% per extra traveller (up to {offer.groupBonusMaxHeads})
+                    </span>
+                  )}
+                  {offer.maxCapMinor && offer.discountType === "PERCENTAGE" && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Max saving ₹{(offer.maxCapMinor / 100).toFixed(0)}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    {isFirst
+                      ? <><CheckCircle className="h-3 w-3 text-emerald-500" /> Unlocked on trip 1</>
+                      : <><Lock className="h-3 w-3" /> Unlocks after trip {offer.unlockTripNumber}</>
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="px-4 py-2.5 bg-primary/5 border-t border-primary/10">
+        <p className="text-[11px] text-muted-foreground text-center">
+          Rewards are applied per operator. Book more trips with this operator to unlock higher tiers. 🚀
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Trip card ───────────────────────────────────────────────────────────────
 function TripCard({ trip }: { trip: TripSearchItem }) {
+  const [showLoyalty, setShowLoyalty] = useState(false);
   const dep = new Date(trip.departureAt);
   const arr = new Date(trip.arrivalAt);
   const durMins = Math.round((arr.getTime() - dep.getTime()) / 60000);
@@ -226,27 +293,20 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
           </div>
         )}
 
-        {/* Loyalty offer + price + CTA */}
+        {/* Price + CTA + loyalty toggle */}
         <div className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
-          {/* Loyalty offer badge */}
-          {trip.offer ? (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70">Loyalty Offer</span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full">
-                  🎁 {offerLabel(trip.offer)} · {trip.offer.title}
-                </span>
-                {trip.offer.groupBonusPerHead > 0 && (
-                  <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                    👥 +{trip.offer.groupBonusPerHead}% per extra traveller
-                  </span>
-                )}
-              </div>
-            </div>
+          {/* Loyalty toggle */}
+          {trip.offers.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setShowLoyalty((v) => !v)}
+              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold px-3 py-1.5 rounded-full transition-colors"
+            >
+              🎁 {discountText(trip.offers[0]!)} · View all {trip.offers.length} loyalty levels
+              {showLoyalty ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
           ) : (
-            <span className="text-[11px] text-muted-foreground">No active offer</span>
+            <span className="text-[11px] text-muted-foreground">No loyalty offer</span>
           )}
 
           {/* Price + book */}
@@ -264,6 +324,11 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
             </Link>
           </div>
         </div>
+
+        {/* Expandable loyalty ladder */}
+        {showLoyalty && trip.offers.length > 0 && (
+          <LoyaltyLadder offers={trip.offers} />
+        )}
       </div>
     </div>
   );

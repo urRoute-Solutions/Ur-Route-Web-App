@@ -5,11 +5,14 @@ import type { SearchTripsInput } from "@/validators/trip";
 export interface TripOffer {
   level: string;
   title: string;
+  description: string | null;
   discountType: string;
   percentage: number | null;
   flatAmountMinor: number | null;
+  maxCapMinor: number | null;
   groupBonusPerHead: number;
   groupBonusMaxHeads: number;
+  unlockTripNumber: number;
 }
 
 export interface TripSearchItem {
@@ -26,7 +29,7 @@ export interface TripSearchItem {
   status: string;
   route: { origin: string; destination: string; distanceKm: number | null; durationMin: number | null; boardingPoints: unknown; droppingPoints: unknown };
   operator: { id: string; name: string; rating: number; logoUrl: string | null };
-  offer: TripOffer | null;
+  offers: TripOffer[];
 }
 
 export async function searchTripsUseCase(
@@ -41,22 +44,31 @@ export async function searchTripsUseCase(
     pageSize: input.pageSize,
   });
 
-  // Fetch LEVEL_1 offers for all operators in one query
+  // Fetch all loyalty tiers for every operator in one query
   const operatorIds = [...new Set(trips.map((t) => t.operatorId))];
-  const offers = await prisma.offerTemplate.findMany({
-    where: { operatorId: { in: operatorIds }, level: "LEVEL_1", isActive: true },
+  const allOffers = await prisma.offerTemplate.findMany({
+    where: { operatorId: { in: operatorIds }, isActive: true },
     select: {
       operatorId: true,
       level: true,
       title: true,
+      description: true,
       discountType: true,
       percentage: true,
       flatAmountMinor: true,
+      maxCapMinor: true,
       groupBonusPerHead: true,
       groupBonusMaxHeads: true,
+      unlockTripNumber: true,
     },
+    orderBy: { level: "asc" },
   });
-  const offerByOperator = Object.fromEntries(offers.map((o) => [o.operatorId, o]));
+  // Group by operatorId
+  const offersByOperator: Record<string, TripOffer[]> = {};
+  for (const o of allOffers) {
+    if (!offersByOperator[o.operatorId]) offersByOperator[o.operatorId] = [];
+    offersByOperator[o.operatorId]!.push(o);
+  }
 
   const items: TripSearchItem[] = trips.map((t) => ({
     id:             t.id,
@@ -84,7 +96,7 @@ export async function searchTripsUseCase(
       rating:  t.operator.rating,
       logoUrl: t.operator.logoUrl,
     },
-    offer: offerByOperator[t.operatorId] ?? null,
+    offers: offersByOperator[t.operatorId] ?? [],
   }));
 
   return { items, total, page: input.page, pageSize: input.pageSize };
