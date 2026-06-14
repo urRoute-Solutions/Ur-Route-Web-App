@@ -25,17 +25,17 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
-  // Razorpay
-  RAZORPAY_KEY_ID: z.string().min(1).default("rzp_test_placeholder"),
-  RAZORPAY_KEY_SECRET: z.string().min(1).default("placeholder"),
-  RAZORPAY_WEBHOOK_SECRET: z.string().min(1).default("placeholder"),
+  // Razorpay — empty string treated same as absent (uses placeholder in dev)
+  RAZORPAY_KEY_ID: z.string().optional().transform((v) => v || "rzp_test_placeholder"),
+  RAZORPAY_KEY_SECRET: z.string().optional().transform((v) => v || "placeholder"),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional().transform((v) => v || "placeholder"),
 
   // Resend (email)
-  RESEND_API_KEY: z.string().min(1).default("re_placeholder"),
-  EMAIL_FROM: z.string().email().default("noreply@urroute.in"),
+  RESEND_API_KEY: z.string().optional().transform((v) => v || "re_placeholder"),
+  EMAIL_FROM: z.string().optional().transform((v) => v || "noreply@urroute.in"),
 
   // Redis (BullMQ — direct ioredis, not Upstash)
-  REDIS_URL: z.string().url().default("redis://localhost:6379"),
+  REDIS_URL: z.string().optional().transform((v) => v || "redis://localhost:6379"),
 
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string().optional(),

@@ -411,6 +411,7 @@ async function main() {
 
   for (let i = 0; i < createdRoutes.length; i++) {
     const route = createdRoutes[i];
+    if (!route) continue;
     const durationMin = route.durationMin ?? 360;
     const busConfig = busConfigs[i % busConfigs.length];
     const amenities = amenitiesSets[i % amenitiesSets.length];
