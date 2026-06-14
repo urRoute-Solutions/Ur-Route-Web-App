@@ -24,6 +24,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 function routeForRole(role: string): string {
   if (role === "ADMIN") return "/admin";
+  if (role === "AGENT") return "/agent/dashboard";
   if (role === "OPERATOR") return "/operator/dashboard";
   return "/dashboard";
 }

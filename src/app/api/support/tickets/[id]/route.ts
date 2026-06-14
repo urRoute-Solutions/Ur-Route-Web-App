@@ -35,7 +35,7 @@ export async function PATCH(
 ) {
   try {
     const { role } = await requireAuth();
-    if (role === "TRAVELER") throw new AppError("Forbidden", 403, "FORBIDDEN");
+    if (role === "TRAVELER" || role === "OPERATOR") throw new AppError("Forbidden", 403, "FORBIDDEN");
     const { id } = await params;
     const { status } = patchSchema.parse(await req.json());
     const ticket = await supportTicketRepository.updateStatus(id, status);

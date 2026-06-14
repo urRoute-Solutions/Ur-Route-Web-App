@@ -70,7 +70,7 @@ export function NavUser({ name, email, profileHref = "/profile", dark = false }:
         <DropdownMenuItem onClick={() => router.push(profileHref)}>
           <User className="mr-2 h-4 w-4" /> Profile
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
+        <DropdownMenuItem onClick={() => router.push(profileHref)}>
           <Settings className="mr-2 h-4 w-4" /> Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />

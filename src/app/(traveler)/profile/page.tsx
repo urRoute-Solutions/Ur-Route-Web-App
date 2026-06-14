@@ -12,7 +12,7 @@ import { User, Phone, Mail } from "lucide-react";
 
 interface ProfileData {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone: string | null;
   role: string;
@@ -22,16 +22,16 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    fetch("/api/users/me")
+    fetch("/api/profile")
       .then((r) => r.json())
       .then((json) => {
         const p = json.data?.user ?? null;
         setProfile(p);
-        if (p) { setName(p.name ?? ""); setPhone(p.phone ?? ""); }
+        if (p) { setFullName(p.fullName ?? ""); setPhone(p.phone ?? ""); }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -39,10 +39,10 @@ export default function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const res = await fetch("/api/users/me", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: phone || null }),
+      body: JSON.stringify({ fullName, phone: phone || null }),
     });
     setSaving(false);
     if (res.ok) toast.success("Profile updated");
@@ -72,7 +72,7 @@ export default function ProfilePage() {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-1.5">
               <Label>Full name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" required />
             </div>
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> Email</Label>

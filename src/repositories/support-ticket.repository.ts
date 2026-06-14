@@ -81,11 +81,24 @@ export const supportTicketRepository = {
       where: { id },
       include: {
         user: { select: { fullName: true, email: true } },
+        assignedAgent: { select: { fullName: true, id: true } },
         messages: { orderBy: { createdAt: "asc" } },
       },
     });
     if (!ticket) return null;
     return { ...ticket, ticketNumber: ticketNumber(ticket.ticketSeq) };
+  },
+
+  async listByAgent(agentId: string) {
+    const rows = await prisma.serviceTicket.findMany({
+      where: { assignedAgentId: agentId, status: { in: ["OPEN", "IN_PROGRESS"] } },
+      orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
+      include: {
+        user: { select: { fullName: true, email: true } },
+        _count: { select: { messages: true } },
+      },
+    });
+    return rows.map((r) => ({ ...r, ticketNumber: ticketNumber(r.ticketSeq) }));
   },
 
   async addMessage(ticketId: string, senderId: string, senderRole: string, body: string) {

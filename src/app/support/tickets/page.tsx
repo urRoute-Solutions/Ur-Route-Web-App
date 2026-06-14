@@ -44,7 +44,7 @@ export default async function MyTicketsPage() {
             </p>
           </div>
           <Button variant="action" size="sm" asChild>
-            <Link href="/">New ticket</Link>
+            <Link href="/dashboard">Open support chat ↗</Link>
           </Button>
         </div>
 

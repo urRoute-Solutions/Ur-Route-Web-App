@@ -25,6 +25,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  AGENT
   OPERATOR
   TRAVELER
 }
@@ -174,6 +175,7 @@ model User {
   reviews         Review[]
   auditLogs       AuditLog[]
   supportTickets  ServiceTicket[]
+  agentTickets    ServiceTicket[] @relation("AgentTickets")
 
   @@index([role])
   @@index([referredById])
@@ -640,6 +642,11 @@ model ServiceTicket {
   priority    TicketPriority @default(MEDIUM)
   subject     String
   description String
+  // Agent assignment
+  assignedAgentId String?
+  assignedAgent   User?     @relation("AgentTickets", fields: [assignedAgentId], references: [id])
+  assignedAt      DateTime?
+  isBotHandled    Boolean   @default(true)
   resolvedAt  DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -647,6 +654,7 @@ model ServiceTicket {
   messages ServiceTicketMessage[]
 
   @@index([userId])
+  @@index([assignedAgentId])
   @@index([operatorId])
   @@index([status, createdAt])
   @@map("service_tickets")

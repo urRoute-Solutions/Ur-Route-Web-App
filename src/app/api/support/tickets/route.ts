@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, handleError } from "@/lib/http";
 import { requireAuth } from "@/lib/auth/session";
 import { supportTicketRepository } from "@/repositories/support-ticket.repository";
+import { autoAssignTicket } from "@/services/ticket-assignment.service";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
     const { userId } = await requireAuth();
     const body = createSchema.parse(await req.json());
     const ticket = await supportTicketRepository.create({ userId, ...body });
+    // Fire-and-forget: assign to agent or trigger bot fallback
+    autoAssignTicket(ticket.id).catch(() => {});
     return ok({ ticket }, 201);
   } catch (err) {
     return handleError(err);

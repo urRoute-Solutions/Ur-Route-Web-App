@@ -60,3 +60,7 @@ export async function requireOperator(): Promise<
 export async function requireAdmin(): Promise<AuthPrincipal> {
   return requireRole("ADMIN");
 }
+
+export async function requireAgent(): Promise<AuthPrincipal> {
+  return requireRole("AGENT", "ADMIN");
+}

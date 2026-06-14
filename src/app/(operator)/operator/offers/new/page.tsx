@@ -53,8 +53,15 @@ export default function NewOfferPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    const levelTitles: Record<string, string> = {
+      LEVEL_1: "Welcome Offer",
+      LEVEL_2: "Stay Reward",
+      LEVEL_3: "Loyalty Bonus",
+      LEVEL_4: "Champion Deal",
+    };
     const body = {
       level: form.level,
+      title: levelTitles[form.level] ?? form.level,
       unlockTripNumber: parseInt(form.unlockTripNumber),
       rewardTripNumber: parseInt(form.rewardTripNumber),
       discountType,
@@ -66,9 +73,7 @@ export default function NewOfferPage() {
       maxCapMinor: form.maxCap
         ? Math.round(parseFloat(form.maxCap) * 100)
         : null,
-      groupBonusPerHead: Math.round(
-        parseFloat(form.groupBonusPerHead || "0") * 100
-      ),
+      groupBonusPerHead: parseFloat(form.groupBonusPerHead || "0"),
       groupBonusMaxHeads: parseInt(form.groupBonusMaxHeads || "0"),
     };
     const res = await fetch("/api/offers", {

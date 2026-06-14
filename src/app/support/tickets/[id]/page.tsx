@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReplyForm } from "./reply-form";
+import { LiveChat } from "./live-chat";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-blue-50 text-blue-700 border-blue-200",
@@ -32,10 +32,14 @@ export default async function TicketDetailPage({
   if (!ticket) notFound();
   if (role === "TRAVELER" && ticket.userId !== userId) notFound();
 
+  const agentName =
+    !ticket.isBotHandled && ticket.assignedAgent
+      ? (ticket.assignedAgent as unknown as { fullName: string }).fullName
+      : null;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-background">
       <div className="container max-w-2xl py-10">
-        {/* Back */}
         <Link
           href="/support/tickets"
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -44,7 +48,7 @@ export default async function TicketDetailPage({
         </Link>
 
         {/* Ticket header */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-mono font-semibold text-muted-foreground">
@@ -71,43 +75,16 @@ export default async function TicketDetailPage({
           </div>
         </div>
 
-        {/* Message thread */}
-        <div className="mt-4 space-y-3">
-          {ticket.messages.map((msg) => {
-            const isUser = msg.senderRole === "USER";
-            return (
-              <div key={msg.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                <div className="max-w-[85%]">
-                  <p className={cn("mb-1 text-[10px] font-semibold uppercase tracking-wider", isUser ? "text-right text-primary" : "text-muted-foreground")}>
-                    {isUser ? "You" : msg.senderRole}
-                  </p>
-                  <div className={cn(
-                    "rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
-                    isUser ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-card border border-border text-foreground"
-                  )}>
-                    {msg.body}
-                  </div>
-                  <p className={cn("mt-1 text-[10px] text-muted-foreground", isUser ? "text-right" : "")}>
-                    {new Date(msg.createdAt).toLocaleString("en-IN")}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Reply — only if not closed */}
-        {ticket.status !== "CLOSED" && ticket.status !== "RESOLVED" && (
-          <div className="mt-6">
-            <ReplyForm ticketId={ticket.id} />
-          </div>
-        )}
-
-        {(ticket.status === "RESOLVED" || ticket.status === "CLOSED") && (
-          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center text-sm font-medium text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-300">
-            This ticket is {ticket.status.toLowerCase()}. Raise a new ticket if you have a different issue.
-          </div>
-        )}
+        {/* Live chat */}
+        <LiveChat
+          ticketId={ticket.id}
+          initialMessages={ticket.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
+          initialMeta={{
+            status: ticket.status,
+            agentName,
+            isBotHandled: ticket.isBotHandled,
+          }}
+        />
       </div>
     </div>
   );
