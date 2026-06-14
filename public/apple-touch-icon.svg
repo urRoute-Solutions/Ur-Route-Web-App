@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="#1B2D78"/>
+
+  <!-- U-curve route path (scaled to 180x180) -->
+  <path d="M45 68 C45 140 135 140 135 68" stroke="white" stroke-width="13" stroke-linecap="round" fill="none"/>
+
+  <!-- Origin dot (white) -->
+  <circle cx="45" cy="52" r="16" fill="white"/>
+
+  <!-- Destination dot (green) -->
+  <circle cx="135" cy="52" r="20" fill="#16A34A"/>
+
+  <!-- Arrow inside destination dot -->
+  <path d="M127 59 L135 44 L143 59" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

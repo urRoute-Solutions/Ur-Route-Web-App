@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bus, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -36,13 +37,8 @@ export function SiteHeader() {
     >
       <div className="container flex h-16 items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Bus className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-[17px] font-extrabold tracking-tight text-primary">
-            urRoute
-          </span>
+        <Link href="/" className="shrink-0">
+          <Logo size="default" />
         </Link>
 
         {/* Center nav */}
@@ -79,13 +75,8 @@ export function SiteHeader() {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72">
-              <div className="mb-8 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Bus className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-[17px] font-extrabold tracking-tight text-primary">
-                  urRoute
-                </span>
+              <div className="mb-8">
+                <Logo size="default" />
               </div>
               <nav className="flex flex-col gap-1">
                 {NAV_LINKS.map(({ href, label }) => (

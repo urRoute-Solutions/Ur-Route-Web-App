@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Bus, Twitter, Linkedin, Instagram } from "lucide-react";
+import { Twitter, Linkedin, Instagram } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 const PRODUCT = [
   { href: "/search", label: "Search Buses" },
@@ -57,13 +58,8 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4 lg:gap-16">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-action">
-                <Bus className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-[17px] font-extrabold tracking-tight text-white">
-                urRoute
-              </span>
+            <Link href="/">
+              <Logo size="default" variant="white" />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-sidebar-foreground/70">
               India&apos;s smartest bus booking platform with loyalty rewards.

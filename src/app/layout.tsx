@@ -8,8 +8,14 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: { default: "urRoute", template: "%s | urRoute" },
-  description: "B2B2C loyalty platform helping bus operators improve traveler retention through gamified rewards.",
+  title: { default: "urRoute — Book your bus, earn every ride", template: "%s | urRoute" },
+  description: "Search buses across 200+ routes, book in seconds, and earn operator-exclusive loyalty rewards on every trip.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.svg",
+  },
+  themeColor: "#1B2D78",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
