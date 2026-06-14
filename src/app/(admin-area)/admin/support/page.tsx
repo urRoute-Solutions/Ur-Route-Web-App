@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { supportTicketRepository } from "@/repositories/support-ticket.repository";
 import Link from "next/link";
 import { StatusUpdater } from "./status-updater";
+import { SeedKnowledgeBase } from "./seed-button";
 import { MessageSquare, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +42,12 @@ export default async function AdminSupportPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-2xl font-black">Support — All Tickets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage all customer support tickets.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-black">Support — All Tickets</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage all customer support tickets.</p>
+        </div>
+        <SeedKnowledgeBase />
       </div>
 
       {/* Summary row */}

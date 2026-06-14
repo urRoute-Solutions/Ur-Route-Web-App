@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, ChevronLeft, CheckCircle, Ticket, RotateCcw, Gift, CreditCard, AlertTriangle, HelpCircle } from "lucide-react";
+import {
+  MessageCircle, X, ChevronLeft, CheckCircle, Ticket, RotateCcw,
+  Gift, CreditCard, AlertTriangle, HelpCircle, Sparkles, ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
 import { LogoMark } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
@@ -18,10 +21,7 @@ type FormConfig = {
 
 type MenuNode = {
   text: string;
-  options: Array<{
-    label: string;
-    to: string | FormConfig; // string = sub-menu key, FormConfig = show form
-  }>;
+  options: Array<{ label: string; to: string | FormConfig }>;
 };
 
 const MENU: Record<string, MenuNode> = {
@@ -84,39 +84,36 @@ const MENU: Record<string, MenuNode> = {
 
 type Msg =
   | { from: "bot"; text: string; options?: Array<{ label: string; id: string }>; isMenu?: boolean }
-  | { from: "user"; text: string };
+  | { from: "user"; text: string }
+  | { from: "ai"; text: string }
+  | { from: "typing" };
 
 /* ── Widget phases ─────────────────────────────────────────────────────────── */
 
 type Phase =
+  | { name: "home" }
   | { name: "menu"; step: string; history: string[] }
   | { name: "describe"; config: FormConfig; description: string }
   | { name: "booking-ref"; config: FormConfig; description: string; bookingRef: string }
   | { name: "submitting" }
-  | { name: "success"; ticketNumber: string };
-
-const CATEGORY_ICON: Record<string, React.ElementType> = {
-  booking: Ticket,
-  refund: RotateCcw,
-  loyalty: Gift,
-  payment: CreditCard,
-  complaint: AlertTriangle,
-  other: HelpCircle,
-};
+  | { name: "success"; ticketNumber: string }
+  | { name: "ai-chat"; history: Array<{ role: "user" | "assistant"; content: string }> };
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
 export function SupportWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [phase, setPhase] = useState<Phase>({ name: "menu", step: "main", history: [] });
+  const [phase, setPhase] = useState<Phase>({ name: "home" });
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Push the initial greeting when first opened
   useEffect(() => {
-    if (open && messages.length === 0) {
-      pushMenu("main");
+    if (open && phase.name === "home" && messages.length === 0) {
+      setMessages([{
+        from: "bot",
+        text: "Hi! I'm the urRoute support assistant. How would you like help today?",
+      }]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -125,27 +122,49 @@ export function SupportWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  function pushBot(text: string, options?: Array<{ label: string; id: string }>) {
+    setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({ from: "bot", text, options }));
+  }
+
   function pushMenu(step: string) {
     const node = MENU[step];
     if (!node) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        from: "bot",
-        text: node.text,
-        isMenu: true,
-        options: node.options.map((o, i) => ({ label: o.label, id: String(i) })),
-      },
-    ]);
-  }
-
-  function pushBot(text: string) {
-    setMessages((prev) => [...prev, { from: "bot", text }]);
+    setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({
+      from: "bot",
+      text: node.text,
+      isMenu: true,
+      options: node.options.map((o, i) => ({ label: o.label, id: String(i) })),
+    }));
   }
 
   function pushUser(text: string) {
     setMessages((prev) => [...prev, { from: "user", text }]);
   }
+
+  function pushTyping() {
+    setMessages((prev) => [...prev, { from: "typing" }]);
+  }
+
+  /* ── Home screen handlers ── */
+
+  function startMenu() {
+    pushUser("Browse help topics");
+    setPhase({ name: "menu", step: "main", history: [] });
+    setTimeout(() => pushMenu("main"), 300);
+  }
+
+  function startAiChat() {
+    pushUser("Chat with AI assistant");
+    setPhase({ name: "ai-chat", history: [] });
+    setTimeout(() => {
+      setMessages((prev) => [...prev, {
+        from: "ai",
+        text: "I can help answer questions about bookings, refunds, loyalty rewards, and more. What would you like to know?",
+      }]);
+    }, 300);
+  }
+
+  /* ── Menu handlers ── */
 
   function handleOptionClick(optionIndex: number) {
     if (phase.name !== "menu") return;
@@ -156,17 +175,13 @@ export function SupportWidget() {
     pushUser(option.label);
 
     if (typeof option.to === "string") {
-      // Navigate to sub-menu
       const nextStep = option.to;
       setPhase({ name: "menu", step: nextStep, history: [...phase.history, phase.step] });
       setTimeout(() => pushMenu(nextStep), 300);
     } else {
-      // Enter form phase
       const config = option.to as FormConfig;
       setPhase({ name: "describe", config, description: "" });
-      setTimeout(() => {
-        pushBot(`Got it — "${config.subCategory}". Please describe your issue in a few lines:`);
-      }, 300);
+      setTimeout(() => pushBot(`Got it — "${config.subCategory}". Please describe your issue:`), 300);
     }
   }
 
@@ -178,6 +193,8 @@ export function SupportWidget() {
     setTimeout(() => pushMenu(prev), 200);
   }
 
+  /* ── Ticket form handlers ── */
+
   async function handleSubmitDescription() {
     if (phase.name !== "describe" || !input.trim()) return;
     const description = input.trim();
@@ -186,9 +203,7 @@ export function SupportWidget() {
 
     if (phase.config.askBookingRef) {
       setPhase({ name: "booking-ref", config: phase.config, description, bookingRef: "" });
-      setTimeout(() => {
-        pushBot('Do you have a booking reference (PNR)? Type it below or type "skip".');
-      }, 300);
+      setTimeout(() => pushBot('Do you have a booking reference (PNR)? Type it below or type "skip".'), 300);
     } else {
       await submitTicket(phase.config, description, "");
     }
@@ -204,7 +219,7 @@ export function SupportWidget() {
 
   async function submitTicket(config: FormConfig, description: string, bookingRef: string) {
     setPhase({ name: "submitting" });
-    pushBot("Creating your ticket...");
+    pushTyping();
 
     try {
       const res = await fetch("/api/support/tickets", {
@@ -221,61 +236,114 @@ export function SupportWidget() {
       });
 
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
         if (res.status === 401) {
-          setPhase({ name: "menu", step: "main", history: [] });
+          setPhase({ name: "home" });
           pushBot("Please sign in to create a support ticket.");
           return;
         }
-        throw new Error(json?.error?.message ?? "Failed");
+        throw new Error("Failed");
       }
 
       const { ticket } = await res.json();
       setPhase({ name: "success", ticketNumber: ticket.ticketNumber });
-      setMessages((prev) => [
-        ...prev.filter((m) => !(m.from === "bot" && m.text === "Creating your ticket...")),
-        {
-          from: "bot",
-          text: `Your ticket ${ticket.ticketNumber} has been created. Our team will respond within 24 hours.`,
-          options: [{ label: "View my tickets", id: "view" }],
-        },
-      ]);
+      setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({
+        from: "bot",
+        text: `Your ticket ${ticket.ticketNumber} has been created. Our team will respond within 24 hours.`,
+        options: [{ label: "View my tickets", id: "view" }],
+      }));
     } catch {
-      setPhase({ name: "menu", step: "main", history: [] });
+      setPhase({ name: "home" });
       pushBot("Something went wrong. Please try again or email support@urroute.in");
     }
   }
+
+  /* ── AI chat handler ── */
+
+  async function handleAiSend() {
+    if (phase.name !== "ai-chat" || !input.trim()) return;
+    const message = input.trim();
+    setInput("");
+    pushUser(message);
+    pushTyping();
+
+    const newHistory: Array<{ role: "user" | "assistant"; content: string }> = [
+      ...phase.history,
+      { role: "user", content: message },
+    ];
+
+    try {
+      const res = await fetch("/api/support/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history: phase.history }),
+      });
+
+      const { reply } = await res.json();
+
+      setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({ from: "ai", text: reply }));
+      setPhase({
+        name: "ai-chat",
+        history: [...newHistory, { role: "assistant", content: reply }],
+      });
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({
+        from: "ai",
+        text: "Something went wrong. Please try again.",
+      }));
+    }
+  }
+
+  function escalateToTicket() {
+    pushUser("Create a support ticket");
+    setPhase({ name: "menu", step: "main", history: [] });
+    setTimeout(() => pushMenu("main"), 300);
+  }
+
+  /* ── Keyboard handler ── */
 
   function handleEnter(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (phase.name === "describe") handleSubmitDescription();
       else if (phase.name === "booking-ref") handleSubmitBookingRef();
+      else if (phase.name === "ai-chat") handleAiSend();
     }
   }
 
-  function getInputPlaceholder() {
-    if (phase.name === "describe") return "Describe your issue...";
-    if (phase.name === "booking-ref") return "Enter PNR or type skip...";
-    return "";
+  const showInput =
+    phase.name === "describe" ||
+    phase.name === "booking-ref" ||
+    phase.name === "ai-chat";
+
+  const showBackBtn = phase.name === "menu" && phase.history.length > 0;
+
+  const inputPlaceholder =
+    phase.name === "describe" ? "Describe your issue..." :
+    phase.name === "booking-ref" ? "Enter PNR or type skip..." :
+    phase.name === "ai-chat" ? "Ask me anything..." : "";
+
+  function handleSend() {
+    if (phase.name === "describe") handleSubmitDescription();
+    else if (phase.name === "booking-ref") handleSubmitBookingRef();
+    else if (phase.name === "ai-chat") handleAiSend();
   }
 
-  const showInput = phase.name === "describe" || phase.name === "booking-ref";
-  const showBackBtn =
-    phase.name === "menu" && phase.history.length > 0;
+  const isTyping = messages.some((m) => m.from === "typing");
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {/* Panel */}
       {open && (
-        <div className="mb-3 flex h-[520px] w-[calc(100vw-3rem)] max-w-[360px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:w-[360px]">
+        <div className="mb-3 flex h-[540px] w-[calc(100vw-3rem)] max-w-[360px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:w-[360px]">
           {/* Header */}
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center gap-3">
               <LogoMark size={28} />
               <div>
                 <p className="text-sm font-bold leading-tight">urRoute Support</p>
-                <p className="text-xs text-primary-foreground/60">We reply within 24 hours</p>
+                <p className="text-xs text-primary-foreground/60">
+                  {phase.name === "ai-chat" ? "AI Assistant" : "We reply within 24 hours"}
+                </p>
               </div>
             </div>
             <button
@@ -289,75 +357,105 @@ export function SupportWidget() {
 
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4 dark:bg-muted/30">
-            {messages.map((msg, i) => (
-              <div key={i} className={cn("flex gap-2", msg.from === "user" ? "justify-end" : "justify-start")}>
-                {msg.from === "bot" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary shadow-sm">
-                    <LogoMark size={20} />
-                  </div>
-                )}
-                <div className={cn("flex max-w-[82%] flex-col gap-2")}>
-                  <div
-                    className={cn(
-                      "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
-                      msg.from === "user"
-                        ? "rounded-br-sm bg-primary text-primary-foreground"
-                        : "rounded-bl-sm bg-white text-foreground shadow-sm dark:bg-card"
-                    )}
-                  >
-                    {msg.text}
-                  </div>
-
-                  {/* Menu buttons */}
-                  {msg.from === "bot" && msg.options && (
-                    <div className="flex flex-col gap-1.5">
-                      {msg.options.map((opt, j) => {
-                        const isLast = i === messages.length - 1;
-                        if (opt.id === "view") {
-                          return (
-                            <Link
-                              key={j}
-                              href="/support/tickets"
-                              className="rounded-xl border border-primary/20 bg-white px-3.5 py-2 text-left text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-primary hover:text-white dark:bg-card"
-                            >
-                              View my tickets
-                            </Link>
-                          );
-                        }
-                        return (
-                          <button
-                            key={j}
-                            disabled={!isLast || phase.name !== "menu"}
-                            onClick={() => handleOptionClick(j)}
-                            className={cn(
-                              "rounded-xl border px-3.5 py-2 text-left text-sm font-medium transition-colors",
-                              isLast && phase.name === "menu"
-                                ? "border-primary/20 bg-white text-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-white dark:bg-card"
-                                : "cursor-default border-border bg-muted/50 text-muted-foreground"
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
+            {messages.map((msg, i) => {
+              if (msg.from === "typing") {
+                return (
+                  <div key={i} className="flex justify-start gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary shadow-sm">
+                      <LogoMark size={20} />
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3.5 py-3 shadow-sm dark:bg-card">
+                      {[0, 150, 300].map((d) => (
+                        <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${d}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
 
-            {phase.name === "submitting" && (
-              <div className="flex justify-start gap-2">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary">
-                  <LogoMark size={20} />
+              if (msg.from === "user") {
+                return (
+                  <div key={i} className="flex justify-end">
+                    <div className="max-w-[82%] rounded-2xl rounded-br-sm bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground">
+                      {msg.text}
+                    </div>
+                  </div>
+                );
+              }
+
+              // bot or ai message
+              const isAi = msg.from === "ai";
+              return (
+                <div key={i} className="flex gap-2">
+                  <div className={cn(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full shadow-sm",
+                    isAi ? "bg-action" : "bg-primary"
+                  )}>
+                    {isAi ? <Sparkles className="h-3.5 w-3.5 text-white" /> : <LogoMark size={20} />}
+                  </div>
+                  <div className="flex max-w-[82%] flex-col gap-2">
+                    <div className="rounded-2xl rounded-bl-sm bg-white px-3.5 py-2.5 text-sm leading-relaxed text-foreground shadow-sm dark:bg-card">
+                      {msg.text}
+                    </div>
+
+                    {/* Home screen quick options */}
+                    {i === 0 && phase.name === "home" && (
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={startAiChat}
+                          className="flex items-center gap-2 rounded-xl border border-action/30 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-action shadow-sm transition-colors hover:bg-action hover:text-white dark:bg-card"
+                        >
+                          <Sparkles className="h-4 w-4 shrink-0" />
+                          Ask AI — get instant answers
+                        </button>
+                        <button
+                          onClick={startMenu}
+                          className="flex items-center gap-2 rounded-xl border border-primary/20 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-white dark:bg-card"
+                        >
+                          <MessageCircle className="h-4 w-4 shrink-0" />
+                          Browse help topics
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Menu buttons */}
+                    {msg.from === "bot" && msg.options && i !== 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        {msg.options.map((opt, j) => {
+                          const isLast = i === messages.length - 1;
+                          if (opt.id === "view") {
+                            return (
+                              <Link
+                                key={j}
+                                href="/support/tickets"
+                                className="rounded-xl border border-primary/20 bg-white px-3.5 py-2 text-left text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-primary hover:text-white dark:bg-card"
+                              >
+                                View my tickets
+                              </Link>
+                            );
+                          }
+                          return (
+                            <button
+                              key={j}
+                              disabled={!isLast || phase.name !== "menu"}
+                              onClick={() => handleOptionClick(j)}
+                              className={cn(
+                                "rounded-xl border px-3.5 py-2 text-left text-sm font-medium transition-colors",
+                                isLast && phase.name === "menu"
+                                  ? "border-primary/20 bg-white text-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-white dark:bg-card"
+                                  : "cursor-default border-border bg-muted/50 text-muted-foreground"
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3.5 py-3 shadow-sm dark:bg-card">
-                  {[0, 150, 300].map((d) => (
-                    <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${d}ms` }} />
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })}
 
             {phase.name === "success" && (
               <div className="mx-auto mt-2 flex flex-col items-center gap-2 rounded-xl border border-action/20 bg-action/5 p-4 text-center">
@@ -369,6 +467,17 @@ export function SupportWidget() {
 
           {/* Bottom bar */}
           <div className="border-t border-border bg-white dark:bg-card">
+            {/* AI chat escalation */}
+            {phase.name === "ai-chat" && !isTyping && messages.filter((m) => m.from === "ai").length >= 1 && (
+              <button
+                onClick={escalateToTicket}
+                className="flex w-full items-center justify-center gap-1.5 border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Still need help? Create a ticket <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
+
+            {/* Back button */}
             {showBackBtn && (
               <button
                 onClick={handleBack}
@@ -378,6 +487,7 @@ export function SupportWidget() {
               </button>
             )}
 
+            {/* Text input */}
             {showInput && (
               <div className="flex items-end gap-2 p-3">
                 <textarea
@@ -385,12 +495,12 @@ export function SupportWidget() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleEnter}
-                  placeholder={getInputPlaceholder()}
+                  placeholder={inputPlaceholder}
                   className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
                 />
                 <button
-                  onClick={phase.name === "describe" ? handleSubmitDescription : handleSubmitBookingRef}
-                  disabled={!input.trim()}
+                  onClick={handleSend}
+                  disabled={!input.trim() || isTyping}
                   className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-action text-white transition-colors hover:bg-action/90 disabled:opacity-40"
                   aria-label="Send"
                 >
@@ -402,7 +512,7 @@ export function SupportWidget() {
               </div>
             )}
 
-            {!showInput && phase.name !== "submitting" && (
+            {!showInput && phase.name !== "submitting" && phase.name !== "home" && (
               <div className="flex items-center justify-center py-2">
                 <p className="text-[11px] text-muted-foreground">
                   {phase.name === "success" ? "Ticket created successfully" : "Select an option above"}
