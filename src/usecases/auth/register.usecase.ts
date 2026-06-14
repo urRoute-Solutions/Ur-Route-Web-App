@@ -3,8 +3,11 @@ import { hashPassword } from "@/lib/auth/password";
 import { userRepository } from "@/repositories/user.repository";
 import { tokenService, type IssuedTokens } from "@/services/token.service";
 import { auditService } from "@/services/audit.service";
+import { notificationService } from "@/services/notification.service";
+import { createVerificationToken } from "@/lib/auth/email-verification";
 import { toUserDTO, type UserDTO } from "@/dto/user.dto";
 import { generateReferralCode } from "@/utils/ids";
+import { logger } from "@/lib/logger";
 import type { RegisterInput } from "@/validators/auth";
 import type { AuthPrincipal } from "@/types/auth";
 
@@ -65,7 +68,33 @@ export async function registerUseCase(
     metadata: { referredById: referredById ?? null },
   });
 
+  // Best-effort — don't fail registration if email sending fails.
+  sendVerificationEmail(user.id, user.email, user.fullName).catch((err) =>
+    logger.error("Failed to send verification email", { userId: user.id, err }),
+  );
+
   return { user: toUserDTO(user), tokens };
+}
+
+async function sendVerificationEmail(userId: string, email: string, fullName: string) {
+  const verifyUrl = await createVerificationToken(userId);
+  await notificationService.sendEmail(
+    email,
+    "Verify your urRoute email address",
+    verificationEmailHtml(fullName, verifyUrl),
+  );
+}
+
+function verificationEmailHtml(name: string, verifyUrl: string): string {
+  return `
+    <div style="font-family:system-ui,sans-serif;max-width:500px;margin:auto;padding:24px">
+      <h2 style="color:#1B2D78;margin-bottom:4px">Verify your email, ${name.split(" ")[0]}</h2>
+      <p style="color:#555;margin-top:0">Thanks for joining urRoute. Click the button below to confirm your email address. The link expires in 24 hours.</p>
+      <a href="${verifyUrl}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#1B2D78;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px">
+        Verify email address
+      </a>
+      <p style="color:#888;font-size:13px">If you didn't create an urRoute account, you can safely ignore this email.</p>
+    </div>`;
 }
 
 /** Retry referral-code generation on the (rare) unique collision. */

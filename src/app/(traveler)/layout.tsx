@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getPrincipal } from "@/lib/auth/session";
 import { userRepository } from "@/repositories/user.repository";
 import { TravelerNav } from "@/components/layout/traveler-nav";
+import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
 
 export default async function TravelerLayout({ children }: { children: React.ReactNode }) {
   const principal = await getPrincipal();
@@ -14,6 +15,7 @@ export default async function TravelerLayout({ children }: { children: React.Rea
   return (
     <div className="min-h-screen bg-background">
       <TravelerNav user={{ fullName: user.fullName, email: user.email }} />
+      {!user.emailVerified && <VerifyEmailBanner email={user.email} />}
       <main>{children}</main>
     </div>
   );

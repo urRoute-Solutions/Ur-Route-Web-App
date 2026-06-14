@@ -44,6 +44,13 @@ export const userRepository = {
     });
   },
 
+  setEmailVerified(id: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { emailVerified: true },
+    });
+  },
+
   /**
    * The operator (tenant) id managed by an OPERATOR-role user, if any.
    * Used to stamp `operatorId` into the principal/JWT at login.
