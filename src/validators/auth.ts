@@ -17,12 +17,15 @@ const password = z
 export const registerSchema = z.object({
   fullName: z.string().min(2).max(120),
   email: z.string().email().toLowerCase(),
-  phone: z
-    .string()
-    .regex(/^\+?[0-9]{10,15}$/, "Invalid phone number")
-    .optional(),
+  phone: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().regex(/^\+?[0-9]{10,15}$/, "Invalid phone number").optional(),
+  ),
   password,
-  referralCode: z.string().min(4).max(12).optional(),
+  referralCode: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(4).max(12).optional(),
+  ),
 });
 
 export const loginSchema = z.object({
