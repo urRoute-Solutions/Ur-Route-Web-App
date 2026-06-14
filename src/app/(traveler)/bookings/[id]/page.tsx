@@ -1,12 +1,16 @@
 import { requireRole } from "@/lib/auth/session";
 import { getBookingUseCase } from "@/usecases/bookings/get-booking.usecase";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { CancelBookingButton } from "./cancel-button";
 import { PayButton } from "./pay-button";
-import { CheckCircle, MapPin, Users, Calendar, CreditCard, Tag } from "lucide-react";
+import { ReviewForm } from "./review-form";
+import { CheckCircle, MapPin, Users, Calendar, CreditCard, Tag, Ticket, Star } from "lucide-react";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const principal = await requireRole("TRAVELER");
@@ -19,19 +23,27 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  // Check if review already exists (server-side, no extra round-trip)
+  const existingReview = await prisma.review.findUnique({
+    where: { bookingId: booking.id },
+    select: { rating: true, comment: true },
+  });
+
   const isPending = booking.status === "PENDING";
   const isConfirmed = booking.status === "CONFIRMED";
+  const isCompleted = booking.status === "COMPLETED";
   const isCancellable = isPending || isConfirmed;
+  const showTicket = isConfirmed || isCompleted;
   const discountTotal = booking.discountMinor + booking.groupBonusMinor;
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
       {/* Status banner */}
       <div className={`flex items-center gap-3 rounded-xl p-4 ${
-        isConfirmed ? "bg-green-50 text-green-800 border border-green-200" :
-        isPending ? "bg-amber-50 text-amber-800 border border-amber-200" :
-        booking.status === "CANCELLED" ? "bg-red-50 text-red-800 border border-red-200" :
-        "bg-slate-50 border"}`}>
+        isConfirmed ? "bg-green-50 text-green-800 border border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-800" :
+        isPending ? "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800" :
+        booking.status === "CANCELLED" ? "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800" :
+        "bg-slate-50 border dark:bg-muted/30"}`}>
         <CheckCircle className="h-5 w-5 shrink-0" />
         <div>
           <p className="font-semibold">{
@@ -97,10 +109,40 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         {isPending && <PayButton bookingId={booking.id} amountMinor={booking.totalFareMinor} />}
+        {showTicket && (
+          <Button variant="outline" size="sm" className="gap-2" asChild>
+            <Link href={`/bookings/${booking.id}/ticket`}>
+              <Ticket className="h-4 w-4" /> View Ticket
+            </Link>
+          </Button>
+        )}
         {isCancellable && <CancelBookingButton bookingId={booking.id} />}
       </div>
+
+      {/* Review section — only for completed bookings */}
+      {isCompleted && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-semibold text-foreground">Rate your trip</p>
+          </div>
+          {existingReview ? (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+              <div className="flex items-center gap-1">
+                {[1,2,3,4,5].map((s) => (
+                  <Star key={s} className="h-4 w-4" fill={s <= existingReview.rating ? "#16A34A" : "none"} stroke={s <= existingReview.rating ? "#16A34A" : "currentColor"} />
+                ))}
+                <span className="ml-1 text-xs text-muted-foreground">Your review</span>
+              </div>
+              {existingReview.comment && <p className="text-sm text-foreground">{existingReview.comment}</p>}
+            </div>
+          ) : (
+            <ReviewForm bookingId={booking.id} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

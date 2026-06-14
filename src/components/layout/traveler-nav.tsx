@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Bus, LayoutDashboard, Gift, Search, Menu, Ticket, Mail } from "lucide-react";
+import { Bus, LayoutDashboard, Gift, Search, Menu, Ticket, Mail, Users, HeadphonesIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavUser } from "./nav-user";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -13,6 +13,8 @@ const NAV_ITEMS = [
   { href: "/search", label: "Search Buses", icon: Search },
   { href: "/bookings", label: "My Bookings", icon: Ticket },
   { href: "/rewards", label: "Rewards", icon: Gift },
+  { href: "/referral", label: "Refer Friends", icon: Users },
+  { href: "/support/tickets", label: "Support", icon: HeadphonesIcon },
 ];
 
 interface TravelerNavProps {

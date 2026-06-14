@@ -1,9 +1,26 @@
-import type { Trip, Seat, Prisma } from "@prisma/client";
+import type { Trip, Seat, Route, Operator, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+
+export type TripWithDetails = Trip & {
+  seats: Seat[];
+  route: Route;
+  operator: Pick<Operator, "id" | "name" | "rating" | "logoUrl" | "contactPhone">;
+};
 
 export const tripRepository = {
   findById(id: string): Promise<(Trip & { seats: Seat[] }) | null> {
     return prisma.trip.findUnique({ where: { id }, include: { seats: true } });
+  },
+
+  findByIdWithDetails(id: string): Promise<TripWithDetails | null> {
+    return prisma.trip.findUnique({
+      where: { id },
+      include: {
+        seats: { orderBy: { label: "asc" } },
+        route: true,
+        operator: { select: { id: true, name: true, rating: true, logoUrl: true, contactPhone: true } },
+      },
+    }) as Promise<TripWithDetails | null>;
   },
 
   findByIdForOperator(id: string, operatorId: string): Promise<Trip | null> {
