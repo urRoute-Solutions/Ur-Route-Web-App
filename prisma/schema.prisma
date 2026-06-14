@@ -97,6 +97,29 @@ enum NotificationChannel {
   IN_APP
 }
 
+enum TicketCategory {
+  BOOKING
+  CANCELLATION_REFUND
+  LOYALTY_REWARDS
+  PAYMENT
+  OPERATOR_COMPLAINT
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 enum NotificationStatus {
   PENDING
   SENT
@@ -145,11 +168,12 @@ model User {
   userBadges     UserBadge[]
   transactions   Transaction[]
   payments       Payment[]
-  refreshTokens  RefreshToken[]
-  sessions       Session[]
-  favorites      Favorite[]
-  reviews        Review[]
-  auditLogs      AuditLog[]
+  refreshTokens   RefreshToken[]
+  sessions        Session[]
+  favorites       Favorite[]
+  reviews         Review[]
+  auditLogs       AuditLog[]
+  supportTickets  ServiceTicket[]
 
   @@index([role])
   @@index([referredById])
@@ -598,6 +622,47 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─────────────────────────── Customer Support ──────────────────────────────
+
+/// A support ticket raised by a traveler through the chat widget.
+model ServiceTicket {
+  id          String         @id @default(cuid())
+  ticketSeq   Int            @default(autoincrement())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  operatorId  String?
+  bookingRef  String?
+  category    TicketCategory
+  subCategory String?
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  subject     String
+  description String
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  messages ServiceTicketMessage[]
+
+  @@index([userId])
+  @@index([operatorId])
+  @@index([status, createdAt])
+  @@map("service_tickets")
+}
+
+model ServiceTicketMessage {
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     ServiceTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderRole String        // "USER" | "OPERATOR" | "ADMIN" | "SYSTEM"
+  senderId   String?
+  body       String
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId])
+  @@map("service_ticket_messages")
 }
 
 /// Pre-aggregated daily analytics per operator (write-side feeds it; read-side
