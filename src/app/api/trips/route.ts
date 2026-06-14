@@ -9,12 +9,12 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
     const input = searchTripsSchema.parse({
-      origin: searchParams.get("origin"),
+      origin:      searchParams.get("origin"),
       destination: searchParams.get("destination"),
-      date: searchParams.get("date"),
-      passengers: searchParams.get("passengers"),
-      page: searchParams.get("page"),
-      pageSize: searchParams.get("pageSize"),
+      date:        searchParams.get("date"),
+      passengers:  searchParams.get("passengers") ?? undefined,
+      page:        searchParams.get("page")       ?? undefined,
+      pageSize:    searchParams.get("pageSize")   ?? undefined,
     });
     const result = await searchTripsUseCase(input);
     return ok(result);
