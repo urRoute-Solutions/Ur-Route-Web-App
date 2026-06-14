@@ -1,5 +1,16 @@
 import { tripRepository } from "@/repositories/trip.repository";
+import { prisma } from "@/lib/prisma";
 import type { SearchTripsInput } from "@/validators/trip";
+
+export interface TripOffer {
+  level: string;
+  title: string;
+  discountType: string;
+  percentage: number | null;
+  flatAmountMinor: number | null;
+  groupBonusPerHead: number;
+  groupBonusMaxHeads: number;
+}
 
 export interface TripSearchItem {
   id: string;
@@ -15,6 +26,7 @@ export interface TripSearchItem {
   status: string;
   route: { origin: string; destination: string; distanceKm: number | null; durationMin: number | null; boardingPoints: unknown; droppingPoints: unknown };
   operator: { id: string; name: string; rating: number; logoUrl: string | null };
+  offer: TripOffer | null;
 }
 
 export async function searchTripsUseCase(
@@ -28,6 +40,23 @@ export async function searchTripsUseCase(
     page: input.page,
     pageSize: input.pageSize,
   });
+
+  // Fetch LEVEL_1 offers for all operators in one query
+  const operatorIds = [...new Set(trips.map((t) => t.operatorId))];
+  const offers = await prisma.offerTemplate.findMany({
+    where: { operatorId: { in: operatorIds }, level: "LEVEL_1", isActive: true },
+    select: {
+      operatorId: true,
+      level: true,
+      title: true,
+      discountType: true,
+      percentage: true,
+      flatAmountMinor: true,
+      groupBonusPerHead: true,
+      groupBonusMaxHeads: true,
+    },
+  });
+  const offerByOperator = Object.fromEntries(offers.map((o) => [o.operatorId, o]));
 
   const items: TripSearchItem[] = trips.map((t) => ({
     id:             t.id,
@@ -55,6 +84,7 @@ export async function searchTripsUseCase(
       rating:  t.operator.rating,
       logoUrl: t.operator.logoUrl,
     },
+    offer: offerByOperator[t.operatorId] ?? null,
   }));
 
   return { items, total, page: input.page, pageSize: input.pageSize };

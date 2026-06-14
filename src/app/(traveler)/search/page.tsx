@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { TripSearchItem } from "@/usecases/trips/search-trips.usecase";
+import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
 
 type SortKey = "price-asc" | "price-desc" | "duration";
 type DepartureWindow = "morning" | "afternoon" | "evening" | "night";
@@ -104,6 +104,17 @@ function PlaceInput({
   );
 }
 
+// ── Offer label helper ──────────────────────────────────────────────────────
+function offerLabel(offer: TripOffer): string {
+  if (offer.discountType === "PERCENTAGE" && offer.percentage) {
+    return `${offer.percentage}% off`;
+  }
+  if (offer.discountType === "FLAT" && offer.flatAmountMinor) {
+    return `₹${(offer.flatAmountMinor / 100).toFixed(0)} off`;
+  }
+  return "Offer available";
+}
+
 // ── Operator avatar ─────────────────────────────────────────────────────────
 function OperatorAvatar({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
   if (logoUrl) {
@@ -113,6 +124,147 @@ function OperatorAvatar({ name, logoUrl }: { name: string; logoUrl?: string | nu
   return (
     <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
       <span className="text-xs font-extrabold text-white">{initials}</span>
+    </div>
+  );
+}
+
+// ── Trip card ───────────────────────────────────────────────────────────────
+function TripCard({ trip }: { trip: TripSearchItem }) {
+  const dep = new Date(trip.departureAt);
+  const arr = new Date(trip.arrivalAt);
+  const durMins = Math.round((arr.getTime() - dep.getTime()) / 60000);
+  const hours = Math.floor(durMins / 60);
+  const mins  = durMins % 60;
+  const depStr = dep.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const arrStr = arr.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const amenities = Array.isArray(trip.amenities) ? (trip.amenities as string[]) : [];
+
+  const seatsTotal = trip.totalSeats;
+  const seatsLeft  = trip.availableSeats;
+  const seatsPct   = Math.round((seatsLeft / seatsTotal) * 100);
+  const seatsUrgent = seatsLeft <= 5;
+
+  return (
+    <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
+      <div className="h-0.5 bg-gradient-to-r from-action via-action/60 to-transparent" />
+
+      <div className="p-5">
+        {/* Operator row */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <OperatorAvatar name={trip.operator.name} logoUrl={trip.operator.logoUrl} />
+            <div>
+              <p className="font-bold text-sm">{trip.operator.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {trip.seatType === "SLEEPER" ? "AC Sleeper" : "AC Seater"} · {trip.layout} · {trip.busName}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
+              {trip.operator.rating.toFixed(1)}
+            </span>
+          </div>
+        </div>
+
+        {/* Time row */}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="text-left">
+            <p className="text-2xl font-extrabold tracking-tight">{depStr}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{trip.route.origin}</p>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <p className="text-xs font-semibold text-muted-foreground">{hours}h {mins}m</p>
+            <div className="relative w-full flex items-center">
+              <div className="h-px flex-1 bg-border" />
+              <div className="mx-2 w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
+                <Bus className="h-2.5 w-2.5 text-primary" />
+              </div>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            {trip.route.distanceKm && (
+              <p className="text-[10px] text-muted-foreground">{trip.route.distanceKm} km</p>
+            )}
+          </div>
+
+          <div className="text-right">
+            <p className="text-2xl font-extrabold tracking-tight">{arrStr}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{trip.route.destination}</p>
+          </div>
+        </div>
+
+        {/* Seat availability bar */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className={cn(
+              "text-[11px] font-bold",
+              seatsUrgent ? "text-red-600" : seatsLeft <= 15 ? "text-amber-600" : "text-emerald-600"
+            )}>
+              {seatsUrgent ? `⚠ Only ${seatsLeft} seat${seatsLeft !== 1 ? "s" : ""} left!` : `${seatsLeft} / ${seatsTotal} seats available`}
+            </span>
+            <span className="text-[11px] text-muted-foreground">{seatsPct}% free</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                seatsUrgent ? "bg-red-500" : seatsLeft <= 15 ? "bg-amber-400" : "bg-emerald-500"
+              )}
+              style={{ width: `${seatsPct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Amenities */}
+        {amenities.length > 0 && (
+          <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+            {amenities.slice(0, 5).map((a) => (
+              <span key={a} className="text-[11px] text-muted-foreground px-2 py-0.5 rounded-full bg-muted/60 border border-border/50">{a}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Loyalty offer + price + CTA */}
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
+          {/* Loyalty offer badge */}
+          {trip.offer ? (
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70">Loyalty Offer</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full">
+                  🎁 {offerLabel(trip.offer)} · {trip.offer.title}
+                </span>
+                {trip.offer.groupBonusPerHead > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    👥 +{trip.offer.groupBonusPerHead}% per extra traveller
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">No active offer</span>
+          )}
+
+          {/* Price + book */}
+          <div className="flex items-center gap-4 ml-auto">
+            <div className="text-right">
+              <p className="text-xl font-extrabold text-foreground">
+                ₹{(trip.basePriceMinor / 100).toFixed(0)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">per seat</p>
+            </div>
+            <Link href={`/book/${trip.id}`}>
+              <Button variant="action" size="sm" className="font-bold gap-1.5 px-5">
+                Book Now <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -368,99 +520,7 @@ export default function SearchPage() {
             )}
 
             {/* Bus cards */}
-            {!loading && filtered.map((trip) => {
-              const dep = new Date(trip.departureAt);
-              const arr = new Date(trip.arrivalAt);
-              const durMins = Math.round((arr.getTime() - dep.getTime()) / 60000);
-              const hours = Math.floor(durMins / 60);
-              const mins  = durMins % 60;
-              const depStr = dep.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
-              const arrStr = arr.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
-              const amenities = Array.isArray(trip.amenities) ? (trip.amenities as string[]) : [];
-
-              return (
-                <div
-                  key={trip.id}
-                  className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all"
-                >
-                  <div className="h-0.5 bg-gradient-to-r from-action via-action/60 to-transparent" />
-
-                  <div className="p-5">
-                    {/* Operator row */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <OperatorAvatar name={trip.operator.name} logoUrl={trip.operator.logoUrl} />
-                        <div>
-                          <p className="font-bold text-sm">{trip.operator.name}</p>
-                          <p className="text-xs text-muted-foreground">{trip.seatType === "SLEEPER" ? "AC Sleeper" : "AC Seater"} · {trip.layout}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                          {trip.operator.rating.toFixed(1)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Time row */}
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="text-left">
-                        <p className="text-2xl font-extrabold tracking-tight">{depStr}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{trip.route.origin}</p>
-                      </div>
-
-                      <div className="flex-1 flex flex-col items-center gap-1">
-                        <p className="text-xs font-semibold text-muted-foreground">{hours}h {mins}m</p>
-                        <div className="relative w-full flex items-center">
-                          <div className="h-px flex-1 bg-border" />
-                          <div className="mx-2 w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
-                            <Bus className="h-2.5 w-2.5 text-primary" />
-                          </div>
-                          <div className="h-px flex-1 bg-border" />
-                        </div>
-                        {trip.route.distanceKm && (
-                          <p className="text-[10px] text-muted-foreground">{trip.route.distanceKm} km</p>
-                        )}
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-2xl font-extrabold tracking-tight">{arrStr}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{trip.route.destination}</p>
-                      </div>
-                    </div>
-
-                    {/* Amenities + seats */}
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                      <span className={cn("text-[11px] font-semibold px-2.5 py-1 rounded-full", seatColor(trip.availableSeats))}>
-                        {trip.availableSeats} seat{trip.availableSeats !== 1 ? "s" : ""} left
-                      </span>
-                      {amenities.slice(0, 4).map((a) => (
-                        <span key={a} className="text-[11px] text-muted-foreground px-2.5 py-1 rounded-full bg-muted/60">{a}</span>
-                      ))}
-                    </div>
-
-                    {/* Price + CTA */}
-                    <div className="flex items-center justify-between gap-4 pt-3 border-t border-border">
-                      <p className="text-[11px] text-muted-foreground">{trip.busName}</p>
-                      <div className="flex items-center gap-4 ml-auto">
-                        <div className="text-right">
-                          <p className="text-xl font-extrabold text-foreground">
-                            ₹{(trip.basePriceMinor / 100).toFixed(0)}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">per seat</p>
-                        </div>
-                        <Link href={`/book/${trip.id}`}>
-                          <Button variant="action" size="sm" className="font-bold gap-1.5 px-5">
-                            Book Now <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {!loading && filtered.map((trip) => <TripCard key={trip.id} trip={trip} />)}
           </div>
         </div>
       </div>
