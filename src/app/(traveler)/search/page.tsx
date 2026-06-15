@@ -293,42 +293,50 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
           </div>
         )}
 
-        {/* Price + CTA + loyalty toggle */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
-          {/* Loyalty toggle */}
-          {trip.offers.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setShowLoyalty((v) => !v)}
-              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold px-3 py-1.5 rounded-full transition-colors"
-            >
-              🎁 {discountText(trip.offers[0]!)} · View all {trip.offers.length} loyalty levels
-              {showLoyalty ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </button>
-          ) : (
-            <span className="text-[11px] text-muted-foreground">No loyalty offer</span>
+        {/* Loyalty flash banner + price + CTA */}
+        <div className="pt-3 border-t border-border space-y-3">
+          {/* Flashy discount banner */}
+          {trip.offers[0] && (
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary/90 to-action px-4 py-3 flex items-center justify-between gap-3">
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2.5s_infinite]" />
+              <div>
+                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">🎁 Your Loyalty Deal</p>
+                <p className="text-white font-black text-2xl leading-tight">
+                  {trip.offers[0].discountType === "PERCENTAGE"
+                    ? `${trip.offers[0].percentage}% OFF`
+                    : `₹${((trip.offers[0].flatAmountMinor ?? 0) / 100).toFixed(0)} OFF`}
+                </p>
+                <p className="text-white/70 text-[11px] mt-0.5">
+                  {trip.offers[0].title}
+                  {trip.offers[0].maxCapMinor ? ` · up to ₹${(trip.offers[0].maxCapMinor / 100).toFixed(0)}` : ""}
+                  {trip.offers[0].groupBonusPerHead > 0 ? ` · +${trip.offers[0].groupBonusPerHead}% per guest` : ""}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-white/60 text-[10px]">Book more → earn more</p>
+                <div className="flex items-center gap-1 mt-1">
+                  {["L1","L2","L3","L4"].map((l, i) => (
+                    <div key={l} className={`rounded-full text-[9px] font-black px-1.5 py-0.5 ${i === 0 ? "bg-white text-primary" : "bg-white/20 text-white/60"}`}>{l}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Price + book */}
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="text-right">
-              <p className="text-xl font-extrabold text-foreground">
-                ₹{(trip.basePriceMinor / 100).toFixed(0)}
-              </p>
-              <p className="text-[10px] text-muted-foreground">per seat</p>
+          {/* Price + Book */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-2xl font-extrabold text-foreground">₹{(trip.basePriceMinor / 100).toFixed(0)}</p>
+              <p className="text-[10px] text-muted-foreground">per seat · before discount</p>
             </div>
             <Link href={`/book/${trip.id}`}>
-              <Button variant="action" size="sm" className="font-bold gap-1.5 px-5">
-                Book Now <ArrowRight className="h-3.5 w-3.5" />
+              <Button variant="action" size="lg" className="font-black gap-2 px-8 text-base">
+                Book Now <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
-
-        {/* Expandable loyalty ladder */}
-        {showLoyalty && trip.offers.length > 0 && (
-          <LoyaltyLadder offers={trip.offers} />
-        )}
       </div>
     </div>
   );
