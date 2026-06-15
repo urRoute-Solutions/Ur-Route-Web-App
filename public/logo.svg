@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <radialGradient id="innerGrad" cx="30%" cy="25%" r="60%">
+      <stop offset="0%" stop-color="white"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="114" fill="#1B2D78"/>
+  <rect width="512" height="512" rx="114" fill="url(#innerGrad)" opacity="0.15"/>
+
+  <!-- U-curve route path -->
+  <path d="M128 210 C128 420 384 420 384 210" stroke="white" stroke-width="38" stroke-linecap="round" fill="none"/>
+
+  <!-- Origin dot (white) -->
+  <circle cx="128" cy="160" r="50" fill="white"/>
+
+  <!-- Destination dot (green) -->
+  <circle cx="384" cy="160" r="62" fill="#16A34A"/>
+
+  <!-- Arrow inside destination dot -->
+  <path d="M362 182 L384 136 L406 182" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
