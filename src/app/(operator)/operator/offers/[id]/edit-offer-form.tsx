@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -74,9 +73,9 @@ export function EditOfferForm({ templateId, operatorId, initial }: Props) {
   return (
     <div className="p-6 max-w-xl space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/operator/offers" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">
+        <button onClick={() => router.back()} className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <div>
           <h1 className="text-xl font-black">Edit Loyalty Offer</h1>
           <p className="text-xs text-muted-foreground">{LEVEL_LABEL[form.level] ?? form.level}</p>
@@ -160,9 +159,7 @@ export function EditOfferForm({ templateId, operatorId, initial }: Props) {
           <Button type="submit" disabled={saving} className="flex-1 font-semibold">
             {saving ? "Saving…" : "Save changes"}
           </Button>
-          <Link href="/operator/offers">
-            <Button type="button" variant="outline" className="px-5">Cancel</Button>
-          </Link>
+          <Button type="button" variant="outline" className="px-5" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
     </div>

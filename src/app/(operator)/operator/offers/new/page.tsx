@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Info, Zap } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const LEVELS = [
@@ -99,12 +98,12 @@ export default function NewOfferPage() {
     <div className="p-6 max-w-xl space-y-6">
       {/* Back nav */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/operator/offers"
+        <button
+          onClick={() => router.back()}
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <div>
           <h1 className="text-xl font-black text-foreground">Add Loyalty Offer</h1>
           <p className="text-xs text-muted-foreground">
@@ -361,11 +360,9 @@ export default function NewOfferPage() {
           >
             {saving ? "Saving…" : "Create Offer"}
           </Button>
-          <Link href="/operator/offers">
-            <Button type="button" variant="outline" className="px-5">
-              Cancel
-            </Button>
-          </Link>
+          <Button type="button" variant="outline" className="px-5" onClick={() => router.back()}>
+            Cancel
+          </Button>
         </div>
       </form>
     </div>

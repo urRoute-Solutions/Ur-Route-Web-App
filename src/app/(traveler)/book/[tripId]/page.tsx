@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Bus, ArrowRight, Users, CheckCircle, Lock, ChevronRight, Minus, Plus } from "lucide-react";
+import { Bus, ArrowRight, Users, CheckCircle, Lock, ChevronRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -529,6 +529,21 @@ export default function BookTripPage() {
 
   return (
     <div className="p-6 max-w-2xl">
+      {/* Back to search */}
+      <button
+        onClick={() => {
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            router.back();
+          } else {
+            router.push("/search");
+          }
+        }}
+        className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-5"
+      >
+        <ArrowLeft className="h-4 w-4 shrink-0" />
+        Back to search
+      </button>
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-black">{stepLabels[step]}</h1>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CancelBookingButton } from "./cancel-button";
 import { PayButton } from "./pay-button";
 import { ReviewForm } from "./review-form";
+import { BackButton } from "@/components/ui/back-button";
 import { CheckCircle, MapPin, Users, Calendar, CreditCard, Tag, Ticket, Star } from "lucide-react";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,6 +39,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
+      <BackButton fallback="/bookings" label="My Bookings" variant="ghost" />
       {/* Status banner */}
       <div className={`flex items-center gap-3 rounded-xl p-4 ${
         isConfirmed ? "bg-green-50 text-green-800 border border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-800" :

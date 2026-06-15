@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 
 export default function NewRoutePage() {
   const router = useRouter();
@@ -47,9 +46,9 @@ export default function NewRoutePage() {
   return (
     <div className="p-6 max-w-lg space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/operator/routes" className="text-muted-foreground hover:text-foreground">
+        <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold">Add Route</h1>
       </div>
 
@@ -79,7 +78,7 @@ export default function NewRoutePage() {
             </div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={saving}>{saving ? "Creating…" : "Create route"}</Button>
-              <Link href="/operator/routes"><Button type="button" variant="ghost">Cancel</Button></Link>
+              <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             </div>
           </form>
         </CardContent>

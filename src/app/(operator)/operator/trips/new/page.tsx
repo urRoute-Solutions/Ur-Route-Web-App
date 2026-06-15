@@ -58,9 +58,9 @@ export default function NewTripPage() {
   return (
     <div className="p-6 max-w-lg space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/operator/trips" className="text-muted-foreground hover:text-foreground">
+        <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold">Schedule Trip</h1>
       </div>
 
@@ -104,7 +104,7 @@ export default function NewTripPage() {
             </div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={saving || !form.routeId}>{saving ? "Scheduling…" : "Schedule trip"}</Button>
-              <Link href="/operator/trips"><Button type="button" variant="ghost">Cancel</Button></Link>
+              <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             </div>
           </form>
         </CardContent>

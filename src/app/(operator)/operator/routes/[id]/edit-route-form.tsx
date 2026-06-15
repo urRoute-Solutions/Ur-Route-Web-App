@@ -72,9 +72,9 @@ export function EditRouteForm({ routeId, operatorId, initial }: Props) {
   return (
     <div className="p-6 max-w-lg space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/operator/routes" className="text-muted-foreground hover:text-foreground">
+        <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold">Edit Route</h1>
       </div>
 
