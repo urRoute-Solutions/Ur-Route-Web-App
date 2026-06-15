@@ -328,18 +328,17 @@ function StepPassengers({
   const guestCount = Math.max(0, selectedSeats.length - 1);
   const baseTotalMinor = pricePerSeat * selectedSeats.length;
 
-  // Loyalty discount applies to the PRIMARY TRAVELER's seat only (seat index 0)
+  // Primary traveler loyalty discount (no per-seat cap — total cap applied below)
   let primaryDiscountMinor = 0;
   if (activeOffer) {
     if (activeOffer.discountType === "PERCENTAGE" && activeOffer.percentage) {
       primaryDiscountMinor = Math.round(pricePerSeat * (activeOffer.percentage / 100));
-      if (activeOffer.maxCapMinor) primaryDiscountMinor = Math.min(primaryDiscountMinor, activeOffer.maxCapMinor);
     } else if (activeOffer.discountType === "FLAT" && activeOffer.flatAmountMinor) {
       primaryDiscountMinor = activeOffer.flatAmountMinor;
     }
   }
 
-  // Colleague discount: 2% per colleague seat (uses groupBonusPerHead if the operator set it, else 2%)
+  // Colleague discount: 2% per colleague (or operator's groupBonusPerHead)
   const colleagueRate = activeOffer && activeOffer.groupBonusPerHead > 0 ? activeOffer.groupBonusPerHead : 2;
   let colleagueDiscountMinor = 0;
   if (guestCount > 0) {
@@ -347,7 +346,11 @@ function StepPassengers({
     colleagueDiscountMinor = Math.round(pricePerSeat * (colleagueRate / 100) * heads);
   }
 
-  const totalDiscountMinor = primaryDiscountMinor + colleagueDiscountMinor;
+  // Apply operator's max cap to the TOTAL discount (protects operators on group bookings)
+  const rawDiscountMinor = primaryDiscountMinor + colleagueDiscountMinor;
+  const maxCapMinor = activeOffer?.maxCapMinor ?? null;
+  const totalDiscountMinor = maxCapMinor !== null ? Math.min(rawDiscountMinor, maxCapMinor) : rawDiscountMinor;
+  const capApplied = maxCapMinor !== null && rawDiscountMinor > maxCapMinor;
   const estimatedTotal = Math.max(0, baseTotalMinor - totalDiscountMinor);
 
   return (
@@ -410,18 +413,32 @@ function StepPassengers({
               <span>₹{(pricePerSeat * guestCount / 100).toFixed(0)}</span>
             </div>
           )}
-          {/* Primary traveler loyalty discount */}
-          {primaryDiscountMinor > 0 && (
+          {/* Discounts — split lines when no cap, single capped line when cap hits */}
+          {!capApplied ? (
+            <>
+              {primaryDiscountMinor > 0 && (
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="flex items-center gap-1"><Gift className="h-3 w-3 shrink-0" /> Your deal — {activeOffer?.title} ({discountText(activeOffer!)})</span>
+                  <span>− ₹{(primaryDiscountMinor/100).toFixed(0)}</span>
+                </div>
+              )}
+              {colleagueDiscountMinor > 0 && (
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="flex items-center gap-1"><Users className="h-3 w-3 shrink-0" /> {guestCount} colleague{guestCount>1?"s":""} × {colleagueRate}% off</span>
+                  <span>− ₹{(colleagueDiscountMinor/100).toFixed(0)}</span>
+                </div>
+              )}
+            </>
+          ) : (
             <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span className="flex items-center gap-1"><Gift className="h-3 w-3 shrink-0" /> Your deal — {activeOffer?.title} ({discountText(activeOffer!)})</span>
-              <span>− ₹{(primaryDiscountMinor/100).toFixed(0)}</span>
-            </div>
-          )}
-          {/* Colleague discount */}
-          {colleagueDiscountMinor > 0 && (
-            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span className="flex items-center gap-1"><Users className="h-3 w-3 shrink-0" /> {guestCount} colleague{guestCount>1?"s":""} × {colleagueRate}% off</span>
-              <span>− ₹{(colleagueDiscountMinor/100).toFixed(0)}</span>
+              <span className="flex items-center gap-1.5">
+                <Gift className="h-3 w-3 shrink-0" />
+                {activeOffer?.title}
+                <span className="text-[9px] font-black bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                  Max ₹{((maxCapMinor ?? 0)/100).toFixed(0)} cap
+                </span>
+              </span>
+              <span>− ₹{(totalDiscountMinor/100).toFixed(0)}</span>
             </div>
           )}
           <div className="border-t border-border pt-2 flex justify-between font-black text-base">
@@ -660,14 +677,13 @@ export default function BookTripPage() {
     const json = await res.json();
     setSubmitting(false);
     if (res.ok) {
-      // Calculate how much was saved to show celebration
+      // Calculate actual (capped) savings for the celebration screen
       const pricePerSeat = trip.basePriceMinor;
       const guestCount = Math.max(0, selectedSeats.length - 1);
       let primaryDiscountMinor = 0;
       if (activeOffer) {
         if (activeOffer.discountType === "PERCENTAGE" && activeOffer.percentage) {
           primaryDiscountMinor = Math.round(pricePerSeat * (activeOffer.percentage / 100));
-          if (activeOffer.maxCapMinor) primaryDiscountMinor = Math.min(primaryDiscountMinor, activeOffer.maxCapMinor);
         } else if (activeOffer.discountType === "FLAT" && activeOffer.flatAmountMinor) {
           primaryDiscountMinor = activeOffer.flatAmountMinor;
         }
@@ -678,7 +694,8 @@ export default function BookTripPage() {
         const heads = activeOffer?.groupBonusMaxHeads ? Math.min(guestCount, activeOffer.groupBonusMaxHeads) : guestCount;
         colleagueDiscountMinor = Math.round(pricePerSeat * (colleagueRate / 100) * heads);
       }
-      const totalSaved = primaryDiscountMinor + colleagueDiscountMinor;
+      const rawSaved = primaryDiscountMinor + colleagueDiscountMinor;
+      const totalSaved = activeOffer?.maxCapMinor ? Math.min(rawSaved, activeOffer.maxCapMinor) : rawSaved;
       if (totalSaved > 0) {
         setCelebration({ savingsMinor: totalSaved, offerTitle: activeOffer?.title ?? "Loyalty Deal", bookingId: json.data.booking.id });
       } else {
