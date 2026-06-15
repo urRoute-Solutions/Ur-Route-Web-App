@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -449,6 +449,140 @@ function StepPassengers({
   );
 }
 
+// ── Celebration overlay ───────────────────────────────────────────────────────
+const CONFETTI_COLORS = ["bg-primary", "bg-action", "bg-amber-400", "bg-emerald-400", "bg-blue-400", "bg-rose-400"];
+
+function CelebrationOverlay({
+  savingsMinor,
+  offerTitle,
+  onView,
+}: {
+  savingsMinor: number;
+  offerTitle: string;
+  onView: () => void;
+}) {
+  const [displayCount, setDisplayCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(5);
+  const target = Math.round(savingsMinor / 100);
+
+  // Count-up with ease-out cubic
+  useEffect(() => {
+    if (target === 0) return;
+    let start: number | null = null;
+    const duration = 1200;
+    function step(ts: number) {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayCount(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }, [target]);
+
+  // Countdown + auto-redirect
+  useEffect(() => {
+    if (timeLeft === 0) { onView(); return; }
+    const t = setTimeout(() => setTimeLeft((p) => p - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft, onView]);
+
+  const particles = useMemo(() =>
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      left: `${((i * 3.7 + Math.sin(i * 1.3) * 8 + 50) % 100).toFixed(1)}%`,
+      delay: `${((i * 0.07) % 1.6).toFixed(2)}s`,
+      duration: `${(2.2 + (i % 5) * 0.3).toFixed(1)}s`,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length]!,
+      small: i % 3 === 0,
+    })), []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes confetti-fall {
+          0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes celebration-pop {
+          0%   { transform: scale(0.55) translateY(24px); opacity: 0; }
+          70%  { transform: scale(1.04) translateY(0); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        @keyframes saving-pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.75; }
+        }
+      `}</style>
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" />
+
+        {/* Confetti */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          {particles.map((p) => (
+            <div
+              key={p.id}
+              className={cn("absolute rounded-full", p.color, p.small ? "w-1.5 h-1.5" : "w-2 h-2")}
+              style={{
+                left: p.left,
+                top: "-12px",
+                animation: `confetti-fall ${p.duration} ${p.delay} ease-in both`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Card */}
+        <div
+          className="relative z-10 w-full max-w-sm rounded-3xl bg-white dark:bg-card border border-border shadow-2xl overflow-hidden"
+          style={{ animation: "celebration-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+        >
+          <div className="h-1.5 bg-gradient-to-r from-primary via-action to-emerald-400" />
+
+          <div className="px-8 pt-8 pb-7 text-center space-y-5">
+            {/* Icon */}
+            <div
+              className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary to-action flex items-center justify-center shadow-lg"
+              style={{ animation: "saving-pulse 2s ease-in-out infinite" }}
+            >
+              <Gift className="h-9 w-9 text-white" />
+            </div>
+
+            {/* Savings */}
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Congratulations!</p>
+              <p className="text-lg font-bold mt-3 text-foreground">You saved</p>
+              <p className="text-6xl font-black text-primary leading-none mt-1 tabular-nums">
+                ₹{displayCount}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                with your <span className="font-semibold text-foreground">{offerTitle}</span>
+              </p>
+            </div>
+
+            {/* Countdown bar */}
+            <div className="space-y-1.5">
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full"
+                  style={{ width: `${(timeLeft / 5) * 100}%`, transition: "width 1s linear" }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Taking you to your booking in {timeLeft}s</p>
+            </div>
+
+            <Button onClick={onView} variant="action" size="lg" className="w-full font-black gap-2">
+              View My Booking <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function BookTripPage() {
   const { tripId } = useParams<{ tripId: string }>();
@@ -462,6 +596,7 @@ export default function BookTripPage() {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [celebration, setCelebration] = useState<{ savingsMinor: number; offerTitle: string; bookingId: string } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -525,11 +660,44 @@ export default function BookTripPage() {
     const json = await res.json();
     setSubmitting(false);
     if (res.ok) {
-      toast.success("Booking created! Proceeding to payment…");
-      router.push(`/bookings/${json.data.booking.id}`);
+      // Calculate how much was saved to show celebration
+      const pricePerSeat = trip.basePriceMinor;
+      const guestCount = Math.max(0, selectedSeats.length - 1);
+      let primaryDiscountMinor = 0;
+      if (activeOffer) {
+        if (activeOffer.discountType === "PERCENTAGE" && activeOffer.percentage) {
+          primaryDiscountMinor = Math.round(pricePerSeat * (activeOffer.percentage / 100));
+          if (activeOffer.maxCapMinor) primaryDiscountMinor = Math.min(primaryDiscountMinor, activeOffer.maxCapMinor);
+        } else if (activeOffer.discountType === "FLAT" && activeOffer.flatAmountMinor) {
+          primaryDiscountMinor = activeOffer.flatAmountMinor;
+        }
+      }
+      const colleagueRate = activeOffer && activeOffer.groupBonusPerHead > 0 ? activeOffer.groupBonusPerHead : 2;
+      let colleagueDiscountMinor = 0;
+      if (guestCount > 0) {
+        const heads = activeOffer?.groupBonusMaxHeads ? Math.min(guestCount, activeOffer.groupBonusMaxHeads) : guestCount;
+        colleagueDiscountMinor = Math.round(pricePerSeat * (colleagueRate / 100) * heads);
+      }
+      const totalSaved = primaryDiscountMinor + colleagueDiscountMinor;
+      if (totalSaved > 0) {
+        setCelebration({ savingsMinor: totalSaved, offerTitle: activeOffer?.title ?? "Loyalty Deal", bookingId: json.data.booking.id });
+      } else {
+        toast.success("Booking created!");
+        router.push(`/bookings/${json.data.booking.id}`);
+      }
     } else {
       toast.error(json.error?.message ?? "Booking failed");
     }
+  }
+
+  if (celebration) {
+    return (
+      <CelebrationOverlay
+        savingsMinor={celebration.savingsMinor}
+        offerTitle={celebration.offerTitle}
+        onView={() => router.push(`/bookings/${celebration.bookingId}`)}
+      />
+    );
   }
 
   if (loading) {
