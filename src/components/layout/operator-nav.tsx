@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Bus, LayoutDashboard, MapPin, CalendarDays, BookOpen, Gift, BarChart3, Menu, HeadphonesIcon, IndianRupee } from "lucide-react";
+import { Bus, LayoutDashboard, MapPin, CalendarDays, BookOpen, Gift, BarChart3, Menu, HeadphonesIcon, IndianRupee, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavUser } from "./nav-user";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/operator/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/operator/revenue", label: "Revenue", icon: IndianRupee },
   { href: "/operator/support", label: "Support", icon: HeadphonesIcon },
+  { href: "/operator/settings", label: "Settings", icon: Settings },
 ];
 
 interface OperatorNavProps {

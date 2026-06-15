@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CancelBookingButton } from "./cancel-button";
 import { PayButton } from "./pay-button";
 import { ReviewForm } from "./review-form";
+import { EditPassengersButton } from "./edit-passengers-button";
 import { BackButton } from "@/components/ui/back-button";
 import { CheckCircle, MapPin, Users, Calendar, CreditCard, Tag, Ticket, Star } from "lucide-react";
 
@@ -96,16 +97,27 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       {/* Passengers */}
       {Array.isArray(booking.passengers) && (booking.passengers as unknown[]).length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" /> Passengers</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" /> Passengers</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             <div className="divide-y">
-              {(booking.passengers as Array<{ name: string; age: number; gender: string; seatLabel: string }>).map((p, i) => (
+              {(booking.passengers as Array<{ name: string; age: number; gender: string; seatLabel: string; phone?: string }>).map((p, i) => (
                 <div key={i} className="flex items-center justify-between py-2 text-sm">
-                  <span className="font-medium">{p.name}</span>
+                  <div>
+                    <span className="font-medium">{p.name}</span>
+                    {p.phone && <span className="text-xs text-muted-foreground ml-2 font-mono">{p.phone}</span>}
+                  </div>
                   <span className="text-muted-foreground">{p.age}y · {p.gender} · Seat {p.seatLabel}</span>
                 </div>
               ))}
             </div>
+            {isCancellable && (
+              <EditPassengersButton
+                bookingId={booking.id}
+                passengers={booking.passengers as Array<{ name: string; age: number; gender: string; seatLabel: string; phone?: string }>}
+              />
+            )}
           </CardContent>
         </Card>
       )}

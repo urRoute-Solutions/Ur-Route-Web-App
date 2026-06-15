@@ -2,11 +2,12 @@ import { requireRole } from "@/lib/auth/session";
 import { userRepository } from "@/repositories/user.repository";
 import { bookingRepository } from "@/repositories/booking.repository";
 import { rewardProgressRepository } from "@/repositories/reward-progress.repository";
+import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users, Wallet } from "lucide-react";
+import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users, Wallet, Star } from "lucide-react";
 
 const LEVEL_META: Record<string, { label: string; next: string; max: number; bar: string; badge: string }> = {
   LEVEL_1: { label: "Welcome", next: "Stay",     max: 4,  bar: "bg-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" },
@@ -31,10 +32,15 @@ function greetingPart() {
 export default async function DashboardPage() {
   const principal = await requireRole("TRAVELER");
 
-  const [user, [bookings, totalBookings], allProgress] = await Promise.all([
+  const [user, [bookings, totalBookings], allProgress, favoriteRoutes] = await Promise.all([
     userRepository.findById(principal.userId),
     bookingRepository.listByUser(principal.userId, { page: 1, pageSize: 5 }),
     rewardProgressRepository.listByUser(principal.userId),
+    prisma.favoriteRoute.findMany({
+      where: { userId: principal.userId },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
   ]);
 
   const activeProgress = allProgress.filter((p) => p.status === "ACTIVE");
@@ -104,6 +110,43 @@ export default async function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* ── Favourite routes ─────────────────────────────────── */}
+        {favoriteRoutes.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                Favourite Routes
+              </h2>
+              <Link href="/search" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                Search all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {favoriteRoutes.map((r) => {
+                const today = new Date().toISOString().slice(0, 10);
+                return (
+                  <Link
+                    key={r.id}
+                    href={`/search?origin=${encodeURIComponent(r.origin)}&destination=${encodeURIComponent(r.destination)}&date=${today}`}
+                    className="bg-white dark:bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/30 hover:bg-muted/20 transition-all group"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                      <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">{r.origin}</p>
+                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-0.5">
+                        <ArrowRight className="h-2.5 w-2.5 shrink-0" /> {r.destination}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* ── Loyalty progress ─────────────────────────────────── */}
         {activeProgress.length > 0 && (

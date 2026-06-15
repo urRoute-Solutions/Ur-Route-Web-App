@@ -5,6 +5,23 @@ import { toBookingDTO, type BookingDTO } from "@/dto/booking.dto";
 import { auditService } from "@/services/audit.service";
 import type { AuthPrincipal } from "@/types/auth";
 
+interface PolicyTier {
+  hoursBeforeDeparture: number;
+  refundPct: number;
+}
+
+function computeRefundMinor(
+  totalFareMinor: number,
+  departureAt: Date,
+  tiers: PolicyTier[],
+): number {
+  const hoursUntilDep = (departureAt.getTime() - Date.now()) / (1000 * 60 * 60);
+  // Tiers are sorted desc by hoursBeforeDeparture; pick the first one the traveler still qualifies for
+  const sorted = [...tiers].sort((a, b) => b.hoursBeforeDeparture - a.hoursBeforeDeparture);
+  const tier = sorted.find((t) => hoursUntilDep >= t.hoursBeforeDeparture) ?? sorted[sorted.length - 1];
+  return Math.round(totalFareMinor * (tier!.refundPct / 100));
+}
+
 export async function cancelBookingUseCase(
   bookingId: string,
   principal: AuthPrincipal,
@@ -26,6 +43,22 @@ export async function cancelBookingUseCase(
     throw new AppError("Completed bookings cannot be cancelled", 409, "BOOKING_COMPLETED");
   }
 
+  // Fetch trip departure + operator cancellation policy for refund calculation
+  const [trip, cancellationPolicy] = await Promise.all([
+    prisma.trip.findUnique({ where: { id: booking.tripId }, select: { departureAt: true } }),
+    prisma.cancellationPolicy.findUnique({ where: { operatorId: booking.operatorId } }),
+  ]);
+
+  const defaultTiers: PolicyTier[] = [
+    { hoursBeforeDeparture: 24, refundPct: 100 },
+    { hoursBeforeDeparture: 4, refundPct: 50 },
+    { hoursBeforeDeparture: 0, refundPct: 0 },
+  ];
+  const tiers = (cancellationPolicy?.tiers as PolicyTier[] | null) ?? defaultTiers;
+  const refundMinor = booking.status === "CONFIRMED" && trip
+    ? computeRefundMinor(booking.totalFareMinor, trip.departureAt, tiers)
+    : 0;
+
   const updated = await prisma.$transaction(async (tx) => {
     await tx.seat.updateMany({
       where: { bookingId: booking.id },
@@ -37,11 +70,11 @@ export async function cancelBookingUseCase(
       data: { availableSeats: { increment: booking.passengerCount } },
     });
 
-    // Credit wallet for paid (CONFIRMED) bookings
-    if (booking.status === "CONFIRMED") {
+    // Credit wallet with policy-calculated refund for CONFIRMED bookings
+    if (refundMinor > 0) {
       await tx.user.update({
         where: { id: booking.userId },
-        data: { walletBalanceMinor: { increment: booking.totalFareMinor } },
+        data: { walletBalanceMinor: { increment: refundMinor } },
       });
     }
 

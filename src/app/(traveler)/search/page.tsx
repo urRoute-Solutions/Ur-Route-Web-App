@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -387,6 +387,58 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
   );
 }
 
+// ── Favourite route button ──────────────────────────────────────────────────
+function FavoriteRouteButton({
+  origin,
+  destination,
+  favorites,
+  onToggle,
+}: {
+  origin: string;
+  destination: string;
+  favorites: Set<string>;
+  onToggle: (origin: string, destination: string, add: boolean) => void;
+}) {
+  const key = `${origin}|${destination}`;
+  const isFav = favorites.has(key);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle() {
+    setBusy(true);
+    try {
+      if (isFav) {
+        await fetch(`/api/favorites/routes?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`, { method: "DELETE" });
+        onToggle(origin, destination, false);
+        toast.success("Route removed from favourites");
+      } else {
+        const r = await fetch("/api/favorites/routes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin, destination }),
+        });
+        if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message); }
+        onToggle(origin, destination, true);
+        toast.success("Route saved to favourites");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={busy}
+      title={isFav ? "Remove from favourites" : "Save route"}
+      className="p-1 rounded-full transition-colors hover:bg-muted"
+    >
+      <Star className={cn("h-4 w-4 transition-colors", isFav ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 hover:text-amber-400")} />
+    </button>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -401,17 +453,38 @@ export default function SearchPage() {
 
   const [places, setPlaces] = useState<{ origins: string[]; destinations: string[] }>({ origins: [], destinations: [] });
 
+  // Favourite routes: "origin|destination" set
+  const [favoriteRoutes, setFavoriteRoutes] = useState<Set<string>>(new Set());
+
   // sort + filter state
   const [sortKey, setSortKey]       = useState<SortKey>("price-asc");
   const [depWindows, setDepWindows] = useState<Set<DepartureWindow>>(new Set());
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // fetch place list once on mount
+  // fetch place list + saved favourites on mount
   useEffect(() => {
     fetch("/api/places")
       .then((r) => r.json())
       .then((j) => { if (j.data) setPlaces(j.data); })
       .catch(() => {});
+
+    fetch("/api/favorites/routes")
+      .then((r) => r.ok ? r.json() : null)
+      .then((j) => {
+        if (j?.data?.favorites) {
+          setFavoriteRoutes(new Set(j.data.favorites.map((f: { origin: string; destination: string }) => `${f.origin}|${f.destination}`)));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleFavToggle = useCallback((orig: string, dest: string, add: boolean) => {
+    const key = `${orig}|${dest}`;
+    setFavoriteRoutes((prev) => {
+      const next = new Set(prev);
+      add ? next.add(key) : next.delete(key);
+      return next;
+    });
   }, []);
 
   async function doSearch(org: string, dest: string, dt: string) {
@@ -625,12 +698,22 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Results header */}
+            {/* Results header with favourite-route star */}
             {!loading && filtered.length > 0 && (
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">
-                  {filtered.length} bus{filtered.length !== 1 ? "es" : ""} found
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold">
+                    {filtered.length} bus{filtered.length !== 1 ? "es" : ""} found
+                  </p>
+                  {origin && destination && (
+                    <FavoriteRouteButton
+                      origin={origin}
+                      destination={destination}
+                      favorites={favoriteRoutes}
+                      onToggle={handleFavToggle}
+                    />
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {new Date(date + "T12:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
                 </p>

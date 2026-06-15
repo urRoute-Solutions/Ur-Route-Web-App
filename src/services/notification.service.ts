@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import twilio from "twilio";
 import { renderBookingConfirmationEmail } from "@/emails/booking-confirmation";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
 
 let resend: Resend | null = null;
 function getResend() {
@@ -17,6 +19,25 @@ function getTwilio() {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return null;
   if (!twilioClient) twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
   return twilioClient;
+}
+
+let firebaseInitialized = false;
+function ensureFirebase(): boolean {
+  const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } = getEnv();
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) return false;
+  if (!firebaseInitialized) {
+    if (!getApps().length) {
+      initializeApp({
+        credential: cert({
+          projectId: FIREBASE_PROJECT_ID,
+          clientEmail: FIREBASE_CLIENT_EMAIL,
+          privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+        }),
+      });
+    }
+    firebaseInitialized = true;
+  }
+  return true;
 }
 
 export const notificationService = {
@@ -61,6 +82,7 @@ export const notificationService = {
     await Promise.all([
       this.sendInApp(userId, "BOOKING_CONFIRMED", "Booking Confirmed!", `Your booking ${data.pnr} is confirmed.`, { pnr: data.pnr }),
       this.sendEmail(email, `Booking Confirmed — ${data.pnr}`, html),
+      this.sendPush(userId, "Booking Confirmed!", `PNR ${data.pnr} · ${data.origin} → ${data.destination}`, { pnr: data.pnr }),
     ]);
   },
 
@@ -83,6 +105,24 @@ export const notificationService = {
   async sendTripReminderSms(phone: string, data: { pnr: string; origin: string; destination: string; departureAt: string }) {
     const dep = new Date(data.departureAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
     await this.sendSms(phone, `urRoute Reminder: Your bus ${data.origin}→${data.destination} departs at ${dep}. PNR: ${data.pnr}. Please board 15 mins early.`);
+  },
+
+  async sendPush(userId: string, title: string, body: string, data: Record<string, string> = {}) {
+    if (!ensureFirebase()) return;
+    try {
+      const tokens = await prisma.fcmToken.findMany({
+        where: { userId },
+        select: { token: true },
+      });
+      if (tokens.length === 0) return;
+      await getMessaging().sendEachForMulticast({
+        tokens: tokens.map((t) => t.token),
+        notification: { title, body },
+        data,
+      });
+    } catch (err) {
+      logger.error("Failed to send FCM push", { userId, err });
+    }
   },
 
   async sendRewardUnlocked(userId: string, email: string, rewardTitle: string) {

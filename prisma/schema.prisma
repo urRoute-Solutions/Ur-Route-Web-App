@@ -199,6 +199,8 @@ model User {
   supportTickets  ServiceTicket[]
   agentTickets    ServiceTicket[] @relation("AgentTickets")
   waitlistEntries Waitlist[]
+  favoriteRoutes  FavoriteRoute[]
+  fcmTokens       FcmToken[]
 
   @@index([role])
   @@index([referredById])
@@ -224,16 +226,17 @@ model Operator {
   updatedAt    DateTime       @updatedAt
   deletedAt    DateTime?
 
-  routes         Route[]
-  trips          Trip[]
-  bookings       Booking[]
-  offerTemplates OfferTemplate[]
-  perks          Perk[]
-  rewardProgress RewardProgress[]
-  rewardHistory  RewardHistory[]
-  reviews        Review[]
-  favorites      Favorite[]
-  analytics      AnalyticsDaily[]
+  routes              Route[]
+  trips               Trip[]
+  bookings            Booking[]
+  offerTemplates      OfferTemplate[]
+  perks               Perk[]
+  rewardProgress      RewardProgress[]
+  rewardHistory       RewardHistory[]
+  reviews             Review[]
+  favorites           Favorite[]
+  analytics           AnalyticsDaily[]
+  cancellationPolicy  CancellationPolicy?
 
   @@index([status])
   @@index([city])
@@ -283,9 +286,10 @@ model Trip {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  bookings  Booking[]
-  seats     Seat[]
-  waitlist  Waitlist[]
+  bookings       Booking[]
+  seats          Seat[]
+  waitlist       Waitlist[]
+  boardingEntries BoardingEntry[]
 
   @@index([operatorId])
   @@index([routeId])
@@ -802,4 +806,63 @@ model StatusDailyStat {
   @@unique([serviceId, date])
   @@index([date])
   @@map("status_daily_stats")
+}
+
+// ─────────────────────────── Boarding Tracking ─────────────────────────────
+
+model BoardingEntry {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  pnr       String
+  seatLabel String
+  boardedAt DateTime @default(now())
+
+  @@unique([tripId, seatLabel])
+  @@index([tripId])
+  @@map("boarding_entries")
+}
+
+// ─────────────────────── Operator Cancellation Policy ──────────────────────
+
+model CancellationPolicy {
+  id         String   @id @default(cuid())
+  operatorId String   @unique
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  // Array of {hoursBeforeDeparture: number, refundPct: number}, sorted desc by hours
+  tiers      Json     @default("[{\"hoursBeforeDeparture\":24,\"refundPct\":100},{\"hoursBeforeDeparture\":4,\"refundPct\":50},{\"hoursBeforeDeparture\":0,\"refundPct\":0}]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("cancellation_policies")
+}
+
+// ───────────────────────────── Favourite Routes ────────────────────────────
+
+model FavoriteRoute {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  origin      String
+  destination String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, origin, destination])
+  @@index([userId])
+  @@map("favorite_routes")
+}
+
+// ─────────────────────────── FCM Push Tokens ───────────────────────────────
+
+model FcmToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String   @default("web")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("fcm_tokens")
 }
