@@ -4,6 +4,8 @@ import { routeRepository } from "@/repositories/route.repository";
 import { tripRepository } from "@/repositories/trip.repository";
 import { toTripDTO, type TripDTO } from "@/dto/trip.dto";
 import { auditService } from "@/services/audit.service";
+import { tripManifestQueue } from "@/queues";
+import { getEnv } from "@/config/env";
 import type { CreateTripInput } from "@/validators/trip";
 import type { AuthPrincipal } from "@/types/auth";
 
@@ -61,6 +63,20 @@ export async function createTripUseCase(
     entity: "Trip",
     entityId: trip.id,
   });
+
+  // Schedule manifest email 1 hour before departure
+  const msUntilManifest = departure.getTime() - Date.now() - 60 * 60 * 1000;
+  if (msUntilManifest > 0) {
+    await tripManifestQueue.add(
+      "send-manifest",
+      {
+        tripId: trip.id,
+        operatorEmail: operator.contactEmail,
+        appUrl: getEnv().APP_URL,
+      },
+      { delay: msUntilManifest, attempts: 3, backoff: { type: "exponential", delay: 5000 } },
+    ).catch(() => {}); // queue failure must not block trip creation
+  }
 
   return toTripDTO(trip);
 }

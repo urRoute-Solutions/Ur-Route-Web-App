@@ -27,7 +27,7 @@ interface TripInfo {
   seats: SeatInfo[];
 }
 interface RewardProgress { currentLevel: string; completedTrips: number }
-interface Passenger { name: string; age: string; gender: string; seatLabel: string }
+interface Passenger { name: string; age: string; gender: string; seatLabel: string; phone: string }
 
 // ── Level config ─────────────────────────────────────────────────────────────
 const LEVEL_META: Record<string, { tag: string; label: string; color: string; bg: string; ring: string }> = {
@@ -390,6 +390,10 @@ function StepPassengers({
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-xs">Mobile number</Label>
+                  <Input value={p.phone} onChange={(e) => onChange(i, "phone", e.target.value)} placeholder="10-digit mobile number" type="tel" maxLength={10} className="h-9" />
+                </div>
               </div>
             </div>
           ))}
@@ -642,7 +646,7 @@ export default function BookTripPage() {
         return next;
       }
       const next = [...prev, label];
-      setPassengers((ps) => [...ps, { name: "", age: "", gender: "", seatLabel: label }]);
+      setPassengers((ps) => [...ps, { name: "", age: "", gender: "", seatLabel: label, phone: "" }]);
       return next;
     });
   }
@@ -652,8 +656,8 @@ export default function BookTripPage() {
   }
 
   async function handleSubmit() {
-    const valid = passengers.every((p) => p.name && p.age && p.gender);
-    if (!valid) { toast.error("Fill in all passenger details"); return; }
+    const valid = passengers.every((p) => p.name && p.age && p.gender && /^[6-9]\d{9}$/.test(p.phone));
+    if (!valid) { toast.error("Fill in all passenger details including a valid 10-digit mobile number"); return; }
     if (!trip) return;
     const seatIds = selectedSeats
       .map((label) => trip.seats.find((s) => s.label === label)?.id)
@@ -670,7 +674,7 @@ export default function BookTripPage() {
       body: JSON.stringify({
         tripId,
         seatIds,
-        passengers: passengers.map((p) => ({ name: p.name, age: parseInt(p.age), gender: p.gender, seatLabel: p.seatLabel })),
+        passengers: passengers.map((p) => ({ name: p.name, age: parseInt(p.age), gender: p.gender, seatLabel: p.seatLabel, phone: p.phone })),
         ...(activeOffer ? { appliedOfferId: activeOffer.id } : {}),
       }),
     });

@@ -43,5 +43,57 @@ export function startRewardWorker() {
   );
 }
 
+export function startTripManifestWorker() {
+  return new Worker(
+    "trip-manifest",
+    async (job) => {
+      const { tripId, operatorEmail, appUrl } = job.data as {
+        tripId: string;
+        operatorEmail: string;
+        appUrl: string;
+      };
+
+      const trip = await prisma.trip.findUnique({
+        where: { id: tripId },
+        include: {
+          route: true,
+          bookings: {
+            where: { status: { in: ["PENDING", "CONFIRMED"] } },
+            select: { pnr: true, passengers: true },
+          },
+        },
+      });
+      if (!trip) return;
+
+      const passengers = trip.bookings.flatMap((b) => {
+        const ps = b.passengers as Array<{ name: string; age: number; gender: string; seatLabel: string; phone?: string }>;
+        return ps.map((p) => ({
+          pnr: b.pnr,
+          seatLabel: p.seatLabel,
+          name: p.name,
+          age: p.age,
+          gender: p.gender,
+          phone: p.phone ?? "-",
+        }));
+      });
+
+      await notificationService.sendTripManifest(
+        operatorEmail,
+        {
+          busName: trip.busName,
+          origin: trip.route.origin,
+          destination: trip.route.destination,
+          departureAt: trip.departureAt.toISOString(),
+          manifestUrl: `${appUrl}/operator/trips/${tripId}/manifest`,
+        },
+        passengers,
+      );
+
+      logger.info("Trip manifest email sent", { tripId, operatorEmail, passengerCount: passengers.length });
+    },
+    { connection },
+  );
+}
+
 process.on("uncaughtException", (err) => logger.error("Worker uncaught exception", { err }));
 process.on("unhandledRejection", (err) => logger.error("Worker unhandled rejection", { err }));

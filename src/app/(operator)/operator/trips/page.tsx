@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bus, Plus, Clock, ArrowRight } from "lucide-react";
+import { Bus, Plus, Clock, ArrowRight, ClipboardList } from "lucide-react";
 
 const STATUS_COLOR: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   SCHEDULED: "default",
@@ -73,6 +73,11 @@ export default async function OperatorTripsPage() {
                     <p className="text-sm font-semibold">₹{(t.basePriceMinor / 100).toFixed(0)}</p>
                   </div>
                   <Badge variant={STATUS_COLOR[t.status] ?? "secondary"}>{t.status}</Badge>
+                  <Link href={`/operator/trips/${t.id}/manifest`}>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                      <ClipboardList className="h-3.5 w-3.5" /> Manifest
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

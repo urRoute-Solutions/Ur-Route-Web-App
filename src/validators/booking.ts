@@ -5,6 +5,7 @@ const passengerSchema = z.object({
   age: z.number().int().min(1).max(120),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   seatLabel: z.string().min(1).max(10),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
 });
 
 export const createBookingSchema = z.object({
