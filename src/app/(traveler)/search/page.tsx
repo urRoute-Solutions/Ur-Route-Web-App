@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle } from "lucide-react";
+import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle, Gift, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
@@ -105,11 +105,11 @@ function PlaceInput({
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-const LEVEL_META: Record<string, { emoji: string; color: string; bg: string; ring: string; label: string }> = {
-  LEVEL_1: { emoji: "🌱", label: "Level 1", color: "text-slate-700 dark:text-slate-300",  bg: "bg-slate-100 dark:bg-slate-800",   ring: "ring-slate-300 dark:ring-slate-600" },
-  LEVEL_2: { emoji: "🌟", label: "Level 2", color: "text-blue-700 dark:text-blue-300",    bg: "bg-blue-50 dark:bg-blue-900/30",   ring: "ring-blue-300 dark:ring-blue-600" },
-  LEVEL_3: { emoji: "💎", label: "Level 3", color: "text-purple-700 dark:text-purple-300",bg: "bg-purple-50 dark:bg-purple-900/30",ring: "ring-purple-300 dark:ring-purple-600" },
-  LEVEL_4: { emoji: "🏆", label: "Level 4", color: "text-amber-700 dark:text-amber-300",  bg: "bg-amber-50 dark:bg-amber-900/30", ring: "ring-amber-300 dark:ring-amber-600" },
+const LEVEL_META: Record<string, { tag: string; color: string; bg: string; ring: string; label: string }> = {
+  LEVEL_1: { tag: "L1", label: "Level 1", color: "text-slate-700 dark:text-slate-300",  bg: "bg-slate-100 dark:bg-slate-800",   ring: "ring-slate-300 dark:ring-slate-600" },
+  LEVEL_2: { tag: "L2", label: "Level 2", color: "text-blue-700 dark:text-blue-300",    bg: "bg-blue-50 dark:bg-blue-900/30",   ring: "ring-blue-300 dark:ring-blue-600" },
+  LEVEL_3: { tag: "L3", label: "Level 3", color: "text-purple-700 dark:text-purple-300",bg: "bg-purple-50 dark:bg-purple-900/30",ring: "ring-purple-300 dark:ring-purple-600" },
+  LEVEL_4: { tag: "L4", label: "Level 4", color: "text-amber-700 dark:text-amber-300",  bg: "bg-amber-50 dark:bg-amber-900/30", ring: "ring-amber-300 dark:ring-amber-600" },
 };
 
 function discountText(o: TripOffer): string {
@@ -136,7 +136,8 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
   return (
     <div className="mt-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
       <div className="px-4 pt-3 pb-2 flex items-center gap-2 border-b border-primary/10">
-        <span className="text-sm font-extrabold text-primary">🎁 Loyalty Rewards Programme</span>
+        <Gift className="h-4 w-4 text-primary shrink-0" />
+        <span className="text-sm font-extrabold text-primary">Loyalty Rewards Programme</span>
         <span className="text-[10px] text-muted-foreground ml-auto">Book more · Earn more · Save more</span>
       </div>
       <div className="divide-y divide-border/50">
@@ -146,8 +147,8 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
           return (
             <div key={offer.level} className={cn("flex items-start gap-3 px-4 py-3", isFirst && "bg-primary/5")}>
               {/* Level badge */}
-              <div className={cn("shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base ring-2 mt-0.5", meta.bg, meta.ring)}>
-                {meta.emoji}
+              <div className={cn("shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-black ring-2 mt-0.5", meta.bg, meta.ring)}>
+                {meta.tag}
               </div>
 
               {/* Content */}
@@ -164,8 +165,9 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
                 )}
                 <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                   {offer.groupBonusPerHead > 0 && (
-                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
-                      👥 +{offer.groupBonusPerHead}% per extra traveller (up to {offer.groupBonusMaxHeads})
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
+                      <Users className="h-2.5 w-2.5 shrink-0" />
+                      +{offer.groupBonusPerHead}% per extra traveller (up to {offer.groupBonusMaxHeads})
                     </span>
                   )}
                   {offer.maxCapMinor && offer.discountType === "PERCENTAGE" && (
@@ -187,7 +189,7 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
       </div>
       <div className="px-4 py-2.5 bg-primary/5 border-t border-primary/10">
         <p className="text-[11px] text-muted-foreground text-center">
-          Rewards are applied per operator. Book more trips with this operator to unlock higher tiers. 🚀
+          Rewards are applied per operator. Book more trips with this operator to unlock higher tiers.
         </p>
       </div>
     </div>
@@ -269,7 +271,7 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
               "text-[11px] font-bold",
               seatsUrgent ? "text-red-600" : seatsLeft <= 15 ? "text-amber-600" : "text-emerald-600"
             )}>
-              {seatsUrgent ? `⚠ Only ${seatsLeft} seat${seatsLeft !== 1 ? "s" : ""} left!` : `${seatsLeft} / ${seatsTotal} seats available`}
+              {seatsUrgent ? `Only ${seatsLeft} seat${seatsLeft !== 1 ? "s" : ""} left!` : `${seatsLeft} / ${seatsTotal} seats available`}
             </span>
             <span className="text-[11px] text-muted-foreground">{seatsPct}% free</span>
           </div>
@@ -301,7 +303,10 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
               {/* Shimmer overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2.5s_infinite]" />
               <div>
-                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">🎁 Your Loyalty Deal</p>
+                <div className="flex items-center gap-1.5">
+                  <Gift className="h-3 w-3 text-white/80" />
+                  <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Your Loyalty Deal</p>
+                </div>
                 <p className="text-white font-black text-2xl leading-tight">
                   {trip.offers[0].discountType === "PERCENTAGE"
                     ? `${trip.offers[0].percentage}% OFF`

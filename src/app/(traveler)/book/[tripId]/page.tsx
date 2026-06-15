@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Bus, ArrowRight, Users, CheckCircle, Lock, ChevronRight, ArrowLeft } from "lucide-react";
+import { Bus, ArrowRight, Users, CheckCircle, Lock, ChevronRight, ArrowLeft, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -30,11 +30,11 @@ interface RewardProgress { currentLevel: string; completedTrips: number }
 interface Passenger { name: string; age: string; gender: string; seatLabel: string }
 
 // ── Level config ─────────────────────────────────────────────────────────────
-const LEVEL_META: Record<string, { emoji: string; label: string; color: string; bg: string; ring: string }> = {
-  LEVEL_1: { emoji: "🌱", label: "Level 1 · Welcome",   color: "text-slate-700 dark:text-slate-200",   bg: "bg-slate-100 dark:bg-slate-800",    ring: "ring-slate-400" },
-  LEVEL_2: { emoji: "🌟", label: "Level 2 · Stay",      color: "text-blue-700 dark:text-blue-300",     bg: "bg-blue-50 dark:bg-blue-900/40",    ring: "ring-blue-400" },
-  LEVEL_3: { emoji: "💎", label: "Level 3 · Loyalty",   color: "text-purple-700 dark:text-purple-300", bg: "bg-purple-50 dark:bg-purple-900/40",ring: "ring-purple-400" },
-  LEVEL_4: { emoji: "🏆", label: "Level 4 · Champion",  color: "text-amber-700 dark:text-amber-300",   bg: "bg-amber-50 dark:bg-amber-900/40",  ring: "ring-amber-400" },
+const LEVEL_META: Record<string, { tag: string; label: string; color: string; bg: string; ring: string }> = {
+  LEVEL_1: { tag: "L1", label: "Level 1 · Welcome",   color: "text-slate-700 dark:text-slate-200",   bg: "bg-slate-100 dark:bg-slate-800",    ring: "ring-slate-400" },
+  LEVEL_2: { tag: "L2", label: "Level 2 · Stay",      color: "text-blue-700 dark:text-blue-300",     bg: "bg-blue-50 dark:bg-blue-900/40",    ring: "ring-blue-400" },
+  LEVEL_3: { tag: "L3", label: "Level 3 · Loyalty",   color: "text-purple-700 dark:text-purple-300", bg: "bg-purple-50 dark:bg-purple-900/40",ring: "ring-purple-400" },
+  LEVEL_4: { tag: "L4", label: "Level 4 · Champion",  color: "text-amber-700 dark:text-amber-300",   bg: "bg-amber-50 dark:bg-amber-900/40",  ring: "ring-amber-400" },
 };
 const LEVEL_ORDER = ["LEVEL_1","LEVEL_2","LEVEL_3","LEVEL_4"];
 
@@ -113,7 +113,10 @@ function StepDeal({
           <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
           <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 translate-y-6 -translate-x-6" />
           <div className="relative">
-            <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">🎁 Your Personal Deal</p>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Gift className="h-3.5 w-3.5 text-white/70" />
+              <p className="text-white/70 text-xs font-bold uppercase tracking-widest">Your Personal Deal</p>
+            </div>
             <p className="font-black text-5xl leading-none mb-2">
               {activeOffer.discountType === "PERCENTAGE"
                 ? `${activeOffer.percentage}% OFF`
@@ -132,7 +135,7 @@ function StepDeal({
               )}
               {activeOffer.groupBonusPerHead > 0 && (
                 <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                  👥 Colleagues: {activeOffer.groupBonusPerHead}% off each (up to {activeOffer.groupBonusMaxHeads})
+                  Colleagues: {activeOffer.groupBonusPerHead}% off each (up to {activeOffer.groupBonusMaxHeads})
                 </span>
               )}
             </div>
@@ -157,11 +160,11 @@ function StepDeal({
             return (
               <div key={offer.level} className={cn("flex items-start gap-3 px-4 py-3.5 transition-colors", isActive && "bg-primary/5")}>
                 <div className={cn(
-                  "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg ring-2 mt-0.5",
+                  "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xs font-black ring-2 mt-0.5",
                   meta.bg, isActive ? meta.ring : "ring-border/50",
-                  !isUnlocked && "opacity-50 grayscale"
+                  !isUnlocked && "opacity-50"
                 )}>
-                  {meta.emoji}
+                  {meta.tag}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -182,8 +185,8 @@ function StepDeal({
                     <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{offer.description}</p>
                   )}
                   {offer.groupBonusPerHead > 0 && isUnlocked && (
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
-                      👥 +{offer.groupBonusPerHead}% per extra traveller
+                    <p className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
+                      <Users className="h-3 w-3 shrink-0" /> +{offer.groupBonusPerHead}% per extra traveller
                     </p>
                   )}
                 </div>
@@ -238,7 +241,7 @@ function StepSeats({
         )}
       >
         {seat.label}
-        {seat.isLadies && !seat.isBooked && <span className="block text-[8px] text-pink-500">♀</span>}
+        {seat.isLadies && !seat.isBooked && <span className="block text-[8px] text-pink-500 font-bold">F</span>}
       </button>
     );
   }
@@ -250,7 +253,7 @@ function StepSeats({
         <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded border border-border bg-background" />Available ({available})</span>
         <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-primary" />Selected ({selectedSeats.length})</span>
         <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-muted/60" />Booked</span>
-        <span className="flex items-center gap-1.5"><span className="text-pink-500 text-sm">♀</span>Ladies</span>
+        <span className="flex items-center gap-1.5"><span className="text-pink-500 text-[10px] font-bold">F</span>Ladies</span>
       </div>
 
       {/* Deck layout */}
@@ -362,7 +365,7 @@ function StepPassengers({
                 <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-black flex items-center justify-center shrink-0">{i+1}</span>
                 <p className="text-sm font-semibold">Seat {p.seatLabel}</p>
                 {i === 0 && <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded-full">Primary Traveller</span>}
-                {i > 0 && <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded-full">👥 Guest</span>}
+                {i > 0 && <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded-full">Guest</span>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
@@ -410,14 +413,14 @@ function StepPassengers({
           {/* Primary traveler loyalty discount */}
           {primaryDiscountMinor > 0 && (
             <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span>🎁 Your deal — {activeOffer?.title} ({discountText(activeOffer!)})</span>
+              <span className="flex items-center gap-1"><Gift className="h-3 w-3 shrink-0" /> Your deal — {activeOffer?.title} ({discountText(activeOffer!)})</span>
               <span>− ₹{(primaryDiscountMinor/100).toFixed(0)}</span>
             </div>
           )}
           {/* Colleague discount */}
           {colleagueDiscountMinor > 0 && (
             <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span>👥 {guestCount} colleague{guestCount>1?"s":""} × {colleagueRate}% off</span>
+              <span className="flex items-center gap-1"><Users className="h-3 w-3 shrink-0" /> {guestCount} colleague{guestCount>1?"s":""} × {colleagueRate}% off</span>
               <span>− ₹{(colleagueDiscountMinor/100).toFixed(0)}</span>
             </div>
           )}
