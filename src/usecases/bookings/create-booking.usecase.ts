@@ -4,25 +4,14 @@ import { tripRepository } from "@/repositories/trip.repository";
 import { bookingRepository } from "@/repositories/booking.repository";
 import { offerTemplateRepository } from "@/repositories/offer-template.repository";
 import { rewardProgressRepository } from "@/repositories/reward-progress.repository";
-import { currentEligibleOffer, calculateDiscount } from "@/lib/reward-engine";
 import { handleFreezeOnBookingUseCase } from "@/usecases/rewards/freeze-progress.usecase";
 import { toBookingDTO, type BookingDTO } from "@/dto/booking.dto";
 import { auditService } from "@/services/audit.service";
 import { generatePnr } from "@/utils/ids";
 import type { CreateBookingInput } from "@/validators/booking";
 import type { AuthPrincipal } from "@/types/auth";
-import type { OfferConfig } from "@/lib/reward-engine";
 import type { OfferTemplate } from "@prisma/client";
 
-function toOfferConfig(t: OfferTemplate): OfferConfig {
-  return {
-    id: t.id, level: t.level, unlockTripNumber: t.unlockTripNumber,
-    rewardTripNumber: t.rewardTripNumber, discountType: t.discountType,
-    percentage: t.percentage, flatAmountMinor: t.flatAmountMinor,
-    maxCapMinor: t.maxCapMinor, groupBonusPerHead: t.groupBonusPerHead,
-    groupBonusMaxHeads: t.groupBonusMaxHeads,
-  };
-}
 
 export async function createBookingUseCase(
   input: CreateBookingInput,
@@ -69,18 +58,43 @@ export async function createBookingUseCase(
   let groupBonusMinor = 0;
   let appliedOfferId: string | undefined;
 
-  if (progress && offers.length > 0) {
-    const eligibleOffer = currentEligibleOffer(
-      { currentLevel: progress.currentLevel, completedTrips: progress.completedTrips, cycleCount: progress.cycleCount, status: progress.status },
-      offers.map(toOfferConfig),
-    );
+  if (offers.length > 0) {
+    // Use the traveler's current level directly (matches UI logic).
+    // Fall back to LEVEL_1 for first-ever bookings where no progress record exists yet.
+    const userLevel = progress?.currentLevel ?? "LEVEL_1";
+    const eligibleOffer = offers.find((o) => o.level === userLevel) ?? offers[0];
+
     if (eligibleOffer) {
-      const discountResult = calculateDiscount(eligibleOffer, {
-        baseFareMinor,
-        passengerCount: input.passengers.length,
-      });
-      discountMinor = discountResult.discountMinor;
-      groupBonusMinor = discountResult.groupBonusMinor;
+      // Apply primary discount to ONE seat only (not the total fare).
+      const pricePerSeat = requestedSeats.length > 0
+        ? Math.round(baseFareMinor / requestedSeats.length)
+        : baseFareMinor;
+      const guestCount = Math.max(0, input.passengers.length - 1);
+
+      if (eligibleOffer.discountType === "PERCENTAGE" && eligibleOffer.percentage != null) {
+        discountMinor = Math.round(pricePerSeat * eligibleOffer.percentage / 100);
+      } else if (eligibleOffer.discountType === "FLAT" && eligibleOffer.flatAmountMinor != null) {
+        discountMinor = eligibleOffer.flatAmountMinor;
+      }
+
+      // Colleague bonus: 2% (or groupBonusPerHead) per extra passenger seat.
+      if (guestCount > 0) {
+        const colleagueRate = eligibleOffer.groupBonusPerHead > 0 ? eligibleOffer.groupBonusPerHead : 2;
+        const heads = eligibleOffer.groupBonusMaxHeads > 0
+          ? Math.min(guestCount, eligibleOffer.groupBonusMaxHeads)
+          : guestCount;
+        groupBonusMinor = Math.round(pricePerSeat * (colleagueRate / 100) * heads);
+      }
+
+      // Apply max cap to total discount (protects operators).
+      if (eligibleOffer.maxCapMinor != null) {
+        const rawTotal = discountMinor + groupBonusMinor;
+        if (rawTotal > eligibleOffer.maxCapMinor) {
+          discountMinor = Math.round(discountMinor * (eligibleOffer.maxCapMinor / rawTotal));
+          groupBonusMinor = eligibleOffer.maxCapMinor - discountMinor;
+        }
+      }
+
       appliedOfferId = eligibleOffer.id;
     }
   }
