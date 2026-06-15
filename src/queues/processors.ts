@@ -20,6 +20,23 @@ export function startNotificationWorker() {
 
       if (type === "BOOKING_CONFIRMED") {
         await notificationService.sendBookingConfirmation(userId, email, data as Parameters<typeof notificationService.sendBookingConfirmation>[2]);
+        // SMS on booking confirmation
+        if (data.phone) {
+          await notificationService.sendBookingSms(data.phone as string, {
+            pnr: data.pnr as string,
+            origin: data.origin as string,
+            destination: data.destination as string,
+            departureAt: data.departureAt as string,
+            totalFareMinor: data.totalFareMinor as number,
+          });
+        }
+      } else if (type === "TRIP_REMINDER_SMS") {
+        await notificationService.sendTripReminderSms(data.phone as string, {
+          pnr: data.pnr as string,
+          origin: data.origin as string,
+          destination: data.destination as string,
+          departureAt: data.departureAt as string,
+        });
       } else if (type === "REWARD_UNLOCKED") {
         await notificationService.sendRewardUnlocked(userId, email, data.rewardTitle as string);
       }

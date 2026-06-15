@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle, Gift, Users } from "lucide-react";
+import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle, Gift, Users, Clock } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
@@ -196,6 +197,41 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
   );
 }
 
+// ── Waitlist button ─────────────────────────────────────────────────────────
+function WaitlistButton({ tripId }: { tripId: string }) {
+  const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function join() {
+    setLoading(true);
+    const res = await fetch(`/api/trips/${tripId}/waitlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seats: 1 }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      setJoined(true);
+      toast.success("You're on the waitlist — we'll notify you if a seat opens.");
+    } else {
+      const j = await res.json();
+      toast.error(j.error?.message ?? "Could not join waitlist");
+    }
+  }
+
+  if (joined) return (
+    <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-600">
+      <Clock className="h-4 w-4" /> On waitlist
+    </div>
+  );
+
+  return (
+    <Button variant="outline" size="lg" onClick={join} disabled={loading} className="font-semibold gap-2 px-6">
+      <Clock className="h-4 w-4" /> {loading ? "Joining..." : "Join Waitlist"}
+    </Button>
+  );
+}
+
 // ── Trip card ───────────────────────────────────────────────────────────────
 function TripCard({ trip }: { trip: TripSearchItem }) {
   const [showLoyalty, setShowLoyalty] = useState(false);
@@ -335,11 +371,15 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
               <p className="text-2xl font-extrabold text-foreground">₹{(trip.basePriceMinor / 100).toFixed(0)}</p>
               <p className="text-[10px] text-muted-foreground">per seat · before discount</p>
             </div>
-            <Link href={`/book/${trip.id}`}>
-              <Button variant="action" size="lg" className="font-black gap-2 px-8 text-base">
-                Book Now <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            {seatsLeft > 0 ? (
+              <Link href={`/book/${trip.id}`}>
+                <Button variant="action" size="lg" className="font-black gap-2 px-8 text-base">
+                  Book Now <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <WaitlistButton tripId={trip.id} />
+            )}
           </div>
         </div>
       </div>

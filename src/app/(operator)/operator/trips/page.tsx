@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Bus, Plus, Clock, ArrowRight, ClipboardList } from "lucide-react";
+import { TripActionButtons } from "./trip-action-buttons";
 
 const STATUS_COLOR: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   SCHEDULED: "default",
@@ -78,6 +79,7 @@ export default async function OperatorTripsPage() {
                       <ClipboardList className="h-3.5 w-3.5" /> Manifest
                     </Button>
                   </Link>
+                  <TripActionButtons tripId={t.id} operatorId={operatorId} status={t.status} />
                 </div>
               </CardContent>
             </Card>

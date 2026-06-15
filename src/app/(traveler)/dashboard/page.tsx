@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users } from "lucide-react";
+import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users, Wallet } from "lucide-react";
 
 const LEVEL_META: Record<string, { label: string; next: string; max: number; bar: string; badge: string }> = {
   LEVEL_1: { label: "Welcome", next: "Stay",     max: 4,  bar: "bg-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" },
@@ -40,6 +40,7 @@ export default async function DashboardPage() {
   const activeProgress = allProgress.filter((p) => p.status === "ACTIVE");
   const totalTrips = activeProgress.reduce((s, p) => s + p.completedTrips, 0);
   const firstName = user?.fullName?.split(" ")[0] ?? "there";
+  const walletBalance = (user as { walletBalanceMinor?: number })?.walletBalanceMinor ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,12 +59,23 @@ export default async function DashboardPage() {
                   : "Start your first journey today."}
               </p>
             </div>
-            <Link href="/search">
-              <Button variant="action" className="font-semibold gap-2 shrink-0">
-                <Search className="h-4 w-4" />
-                Search Buses
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3 shrink-0">
+              {walletBalance > 0 && (
+                <div className="flex items-center gap-1.5 bg-white/10 text-white rounded-xl px-3 py-2">
+                  <Wallet className="h-4 w-4 text-white/70" />
+                  <div>
+                    <p className="text-[10px] text-white/60 leading-none">Wallet</p>
+                    <p className="text-sm font-bold leading-none mt-0.5">₹{(walletBalance / 100).toFixed(0)}</p>
+                  </div>
+                </div>
+              )}
+              <Link href="/search">
+                <Button variant="action" className="font-semibold gap-2">
+                  <Search className="h-4 w-4" />
+                  Search Buses
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

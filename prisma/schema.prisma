@@ -173,13 +173,14 @@ model User {
   referredById  String?
   referredBy    User?     @relation("Referral", fields: [referredById], references: [id])
   referrals     User[]    @relation("Referral")
-  emailVerified Boolean   @default(false)
-  isActive      Boolean   @default(true)
-  birthday      DateTime?
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  emailVerified      Boolean   @default(false)
+  isActive           Boolean   @default(true)
+  birthday           DateTime?
+  lastLoginAt        DateTime?
+  walletBalanceMinor Int       @default(0) // refund credits in paise
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
 
   // An OPERATOR-role user owns exactly one Operator (the tenant they manage).
   operator       Operator?
@@ -197,6 +198,7 @@ model User {
   auditLogs       AuditLog[]
   supportTickets  ServiceTicket[]
   agentTickets    ServiceTicket[] @relation("AgentTickets")
+  waitlistEntries Waitlist[]
 
   @@index([role])
   @@index([referredById])
@@ -281,8 +283,9 @@ model Trip {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  bookings Booking[]
-  seats    Seat[]
+  bookings  Booking[]
+  seats     Seat[]
+  waitlist  Waitlist[]
 
   @@index([operatorId])
   @@index([routeId])
@@ -307,6 +310,23 @@ model Seat {
   @@unique([tripId, label])
   @@index([tripId, isBooked])
   @@map("seats")
+}
+
+// ───────────────────────────── Waitlist ────────────────────────────────────
+
+model Waitlist {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId     String
+  trip       Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  seats      Int       @default(1)
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, tripId])
+  @@index([tripId, createdAt])
+  @@map("waitlist")
 }
 
 // ───────────────────────────── Bookings ────────────────────────────────────

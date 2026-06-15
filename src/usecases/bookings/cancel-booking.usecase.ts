@@ -12,7 +12,6 @@ export async function cancelBookingUseCase(
   const booking = await bookingRepository.findById(bookingId);
   if (!booking) throw new NotFoundError("Booking");
 
-  // Travelers can only cancel their own; operators/admins can cancel any in their scope.
   if (principal.role === "TRAVELER" && booking.userId !== principal.userId) {
     throw new ForbiddenError();
   }
@@ -28,7 +27,6 @@ export async function cancelBookingUseCase(
   }
 
   const updated = await prisma.$transaction(async (tx) => {
-    // Release the seats.
     await tx.seat.updateMany({
       where: { bookingId: booking.id },
       data: { isBooked: false, bookingId: null },
@@ -39,11 +37,40 @@ export async function cancelBookingUseCase(
       data: { availableSeats: { increment: booking.passengerCount } },
     });
 
+    // Credit wallet for paid (CONFIRMED) bookings
+    if (booking.status === "CONFIRMED") {
+      await tx.user.update({
+        where: { id: booking.userId },
+        data: { walletBalanceMinor: { increment: booking.totalFareMinor } },
+      });
+    }
+
+    // Notify the first un-notified waitlist entry for this trip
+    const firstWait = await tx.waitlist.findFirst({
+      where: { tripId: booking.tripId, notifiedAt: null },
+      orderBy: { createdAt: "asc" },
+    });
+    if (firstWait) {
+      await tx.waitlist.update({ where: { id: firstWait.id }, data: { notifiedAt: new Date() } });
+      await tx.notification.create({
+        data: {
+          user: { connect: { id: firstWait.userId } },
+          channel: "IN_APP",
+          type: "WAITLIST_SEAT_AVAILABLE",
+          title: "A seat opened up!",
+          body: "A seat on your waitlisted trip just became available. Book now before it's gone.",
+          data: { tripId: booking.tripId },
+          status: "SENT",
+          sentAt: new Date(),
+        },
+      });
+    }
+
     return tx.booking.update({
       where: { id: booking.id },
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
-  });
+  }, { timeout: 15000 });
 
   auditService.record({
     action: "BOOKING_CANCELLED",

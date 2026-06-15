@@ -7,6 +7,7 @@ import { rewardProgressRepository } from "@/repositories/reward-progress.reposit
 import { handleFreezeOnBookingUseCase } from "@/usecases/rewards/freeze-progress.usecase";
 import { toBookingDTO, type BookingDTO } from "@/dto/booking.dto";
 import { auditService } from "@/services/audit.service";
+import { notificationQueue } from "@/queues";
 import { generatePnr } from "@/utils/ids";
 import type { CreateBookingInput } from "@/validators/booking";
 import type { AuthPrincipal } from "@/types/auth";
@@ -158,6 +159,30 @@ export async function createBookingUseCase(
     entityId: booking.id,
     metadata: { pnr },
   });
+
+  // Schedule T-2h SMS reminder (fire-and-forget — queue failure must not block booking)
+  const primaryPhone = (input.passengers[0] as { phone?: string })?.phone;
+  if (primaryPhone) {
+    const msUntilReminder = trip.departureAt.getTime() - Date.now() - 2 * 60 * 60 * 1000;
+    if (msUntilReminder > 0) {
+      notificationQueue.add(
+        "notifications",
+        {
+          type: "TRIP_REMINDER_SMS",
+          userId: principal.userId,
+          email: "",
+          data: {
+            phone: primaryPhone,
+            pnr,
+            origin: "",
+            destination: "",
+            departureAt: trip.departureAt.toISOString(),
+          },
+        },
+        { delay: msUntilReminder },
+      ).catch(() => {});
+    }
+  }
 
   return toBookingDTO(booking);
 }

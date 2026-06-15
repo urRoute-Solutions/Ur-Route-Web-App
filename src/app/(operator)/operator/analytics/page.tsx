@@ -1,10 +1,23 @@
 import { requireOperator } from "@/lib/auth/session";
 import { getOperatorAnalyticsUseCase } from "@/usecases/analytics/get-analytics.usecase";
-import { BarChart3, TrendingUp, Users, BookOpen } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { BarChart3, TrendingUp, Users, BookOpen, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function fmt(minor: number) {
   return `₹${(minor / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+}
+
+function OccupancyBar({ pct }: { pct: number }) {
+  const color = pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-600";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+        <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-semibold w-10 text-right">{pct}%</span>
+    </div>
+  );
 }
 
 export default async function AnalyticsPage() {
@@ -13,7 +26,15 @@ export default async function AnalyticsPage() {
   const to = new Date().toISOString().split("T")[0]!;
   const from = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0]!;
 
-  const rows = await getOperatorAnalyticsUseCase(operatorId, { from, to });
+  const [rows, trips] = await Promise.all([
+    getOperatorAnalyticsUseCase(operatorId, { from, to }),
+    prisma.trip.findMany({
+      where: { operatorId, departureAt: { gte: new Date(Date.now() - 30 * 86400000) } },
+      include: { route: { select: { origin: true, destination: true } } },
+      orderBy: { departureAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   const totals = rows.reduce(
     (acc, r) => ({
@@ -25,11 +46,15 @@ export default async function AnalyticsPage() {
     { bookings: 0, revenue: 0, newUsers: 0, rewards: 0 },
   );
 
+  const avgOccupancy = trips.length
+    ? Math.round(trips.reduce((s, t) => s + ((t.totalSeats - t.availableSeats) / t.totalSeats) * 100, 0) / trips.length)
+    : 0;
+
   const stats = [
     { label: "Total bookings", value: totals.bookings.toString(), icon: BookOpen, color: "text-primary", bg: "bg-primary/5" },
     { label: "Revenue (30d)", value: fmt(totals.revenue), icon: TrendingUp, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30" },
     { label: "New travelers", value: totals.newUsers.toString(), icon: Users, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { label: "Rewards redeemed", value: totals.rewards.toString(), icon: BarChart3, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
+    { label: "Avg occupancy", value: `${avgOccupancy}%`, icon: Percent, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
   ];
 
   return (
@@ -53,13 +78,47 @@ export default async function AnalyticsPage() {
         ))}
       </div>
 
+      {/* Occupancy per trip */}
+      {trips.length > 0 && (
+        <div>
+          <h2 className="text-base font-bold text-foreground mb-3">Trip occupancy (last 30 days)</h2>
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/40">
+                <tr>
+                  {["Route", "Date", "Bus", "Seats Sold", "Occupancy"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-card">
+                {trips.map((t) => {
+                  const sold = t.totalSeats - t.availableSeats;
+                  const pct = Math.round((sold / t.totalSeats) * 100);
+                  const dep = new Date(t.departureAt);
+                  return (
+                    <tr key={t.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 text-xs font-semibold">{t.route.origin} → {t.route.destination}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {dep.toLocaleDateString("en-IN", { day: "numeric", month: "short" })} · {dep.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{t.busName}</td>
+                      <td className="px-4 py-3 text-xs">{sold} / {t.totalSeats}</td>
+                      <td className="px-4 py-3 w-40"><OccupancyBar pct={pct} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/20 py-16 text-center">
           <BarChart3 className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
           <p className="font-semibold text-foreground">No analytics data yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Data is collected automatically as bookings are made. Check back once you have activity.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Data is collected automatically as bookings are made.</p>
         </div>
       ) : (
         <div>
@@ -69,9 +128,7 @@ export default async function AnalyticsPage() {
               <thead className="border-b border-border bg-muted/40">
                 <tr>
                   {["Date", "Bookings", "Revenue", "New Travelers", "Rewards"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {h}
-                    </th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
                   ))}
                 </tr>
               </thead>

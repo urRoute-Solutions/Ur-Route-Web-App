@@ -47,6 +47,11 @@ const serverSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
 
+  // Twilio (SMS)
+  TWILIO_ACCOUNT_SID: z.string().optional().transform((v) => v || ""),
+  TWILIO_AUTH_TOKEN: z.string().optional().transform((v) => v || ""),
+  TWILIO_PHONE_NUMBER: z.string().optional().transform((v) => v || ""),
+
   // PostHog
   POSTHOG_API_KEY: z.string().optional(),
 

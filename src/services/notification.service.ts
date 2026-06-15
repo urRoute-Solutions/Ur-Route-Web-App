@@ -2,12 +2,21 @@ import { Resend } from "resend";
 import { getEnv } from "@/config/env";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import twilio from "twilio";
 import { renderBookingConfirmationEmail } from "@/emails/booking-confirmation";
 
 let resend: Resend | null = null;
 function getResend() {
   if (!resend) resend = new Resend(getEnv().RESEND_API_KEY);
   return resend;
+}
+
+let twilioClient: ReturnType<typeof twilio> | null = null;
+function getTwilio() {
+  const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN } = getEnv();
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return null;
+  if (!twilioClient) twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  return twilioClient;
 }
 
 export const notificationService = {
@@ -53,6 +62,27 @@ export const notificationService = {
       this.sendInApp(userId, "BOOKING_CONFIRMED", "Booking Confirmed!", `Your booking ${data.pnr} is confirmed.`, { pnr: data.pnr }),
       this.sendEmail(email, `Booking Confirmed — ${data.pnr}`, html),
     ]);
+  },
+
+  async sendSms(phone: string, message: string) {
+    const client = getTwilio();
+    const { TWILIO_PHONE_NUMBER } = getEnv();
+    if (!client || !TWILIO_PHONE_NUMBER) return;
+    try {
+      await client.messages.create({ body: message, from: TWILIO_PHONE_NUMBER, to: `+91${phone}` });
+    } catch (err) {
+      logger.error("Failed to send SMS", { phone, err });
+    }
+  },
+
+  async sendBookingSms(phone: string, data: { pnr: string; origin: string; destination: string; departureAt: string; totalFareMinor: number }) {
+    const dep = new Date(data.departureAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    await this.sendSms(phone, `urRoute: Booking confirmed!\nPNR: ${data.pnr}\n${data.origin} → ${data.destination}\nDep: ${dep}\nTotal: ₹${(data.totalFareMinor / 100).toFixed(0)}\nShow this PNR to board.`);
+  },
+
+  async sendTripReminderSms(phone: string, data: { pnr: string; origin: string; destination: string; departureAt: string }) {
+    const dep = new Date(data.departureAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    await this.sendSms(phone, `urRoute Reminder: Your bus ${data.origin}→${data.destination} departs at ${dep}. PNR: ${data.pnr}. Please board 15 mins early.`);
   },
 
   async sendRewardUnlocked(userId: string, email: string, rewardTitle: string) {

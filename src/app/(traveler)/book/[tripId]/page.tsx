@@ -638,6 +638,21 @@ export default function BookTripPage() {
     });
   }, [tripId]);
 
+  // Poll seat availability every 15s while on the seat map step
+  useEffect(() => {
+    if (step !== 1) return;
+    const interval = setInterval(() => {
+      fetch(`/api/trips/${tripId}`)
+        .then((r) => r.json())
+        .then((json) => {
+          const fresh = json.data?.trip;
+          if (fresh) setTrip((prev) => prev ? { ...prev, seats: fresh.seats, availableSeats: fresh.availableSeats } : prev);
+        })
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [tripId, step]);
+
   function toggleSeat(label: string) {
     setSelectedSeats((prev) => {
       if (prev.includes(label)) {
