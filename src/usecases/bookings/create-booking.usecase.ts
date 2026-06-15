@@ -148,7 +148,7 @@ export async function createBookingUseCase(
     });
 
     return newBooking;
-  });
+  }, { timeout: 15000 });
 
   auditService.record({
     action: "BOOKING_CREATED",
