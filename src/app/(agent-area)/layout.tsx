@@ -14,7 +14,7 @@ export default async function AgentLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen bg-slate-950">
       <AgentNav name={user.fullName} email={user.email} />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto md:pt-0 pt-14">{children}</main>
     </div>
   );
 }
