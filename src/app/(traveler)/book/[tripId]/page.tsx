@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 // ── Types ────────────────────────────────────────────────────────────────────
 interface SeatInfo { id: string; label: string; deck: string; isBooked: boolean; isLadies: boolean; priceMinor: number }
 interface OfferInfo {
-  level: string; title: string; description: string | null;
+  id: string; level: string; title: string; description: string | null;
   discountType: string; percentage: number | null; flatAmountMinor: number | null;
   maxCapMinor: number | null; groupBonusPerHead: number; groupBonusMaxHeads: number;
   unlockTripNumber: number;
@@ -113,15 +113,16 @@ function StepDeal({
           <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
           <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 translate-y-6 -translate-x-6" />
           <div className="relative">
-            <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">🎁 Your Current Deal</p>
+            <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">🎁 Your Personal Deal</p>
             <p className="font-black text-5xl leading-none mb-2">
               {activeOffer.discountType === "PERCENTAGE"
                 ? `${activeOffer.percentage}% OFF`
                 : `₹${((activeOffer.flatAmountMinor ?? 0)/100).toFixed(0)} OFF`}
             </p>
             <p className="text-white/80 text-sm font-semibold">{activeOffer.title}</p>
+            <p className="text-white/55 text-[11px] mt-1">Applies to your seat · Colleagues get 2% off each</p>
             {activeOffer.description && (
-              <p className="text-white/60 text-xs mt-1">{activeOffer.description}</p>
+              <p className="text-white/50 text-xs mt-0.5">{activeOffer.description}</p>
             )}
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               {activeOffer.maxCapMinor && (
@@ -131,7 +132,7 @@ function StepDeal({
               )}
               {activeOffer.groupBonusPerHead > 0 && (
                 <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                  👥 +{activeOffer.groupBonusPerHead}% per guest (up to {activeOffer.groupBonusMaxHeads})
+                  👥 Colleagues: {activeOffer.groupBonusPerHead}% off each (up to {activeOffer.groupBonusMaxHeads})
                 </span>
               )}
             </div>
@@ -320,26 +321,30 @@ function StepPassengers({
 }) {
   const userLevel = progress?.currentLevel ?? "LEVEL_1";
   const activeOffer = offers.find((o) => o.level === userLevel) ?? offers[0];
-  const baseTotalMinor = trip.basePriceMinor * selectedSeats.length;
+  const pricePerSeat = trip.basePriceMinor;
+  const guestCount = Math.max(0, selectedSeats.length - 1);
+  const baseTotalMinor = pricePerSeat * selectedSeats.length;
 
-  let discountMinor = 0;
+  // Loyalty discount applies to the PRIMARY TRAVELER's seat only (seat index 0)
+  let primaryDiscountMinor = 0;
   if (activeOffer) {
     if (activeOffer.discountType === "PERCENTAGE" && activeOffer.percentage) {
-      discountMinor = Math.round(baseTotalMinor * (activeOffer.percentage / 100));
-      if (activeOffer.maxCapMinor) discountMinor = Math.min(discountMinor, activeOffer.maxCapMinor);
+      primaryDiscountMinor = Math.round(pricePerSeat * (activeOffer.percentage / 100));
+      if (activeOffer.maxCapMinor) primaryDiscountMinor = Math.min(primaryDiscountMinor, activeOffer.maxCapMinor);
     } else if (activeOffer.discountType === "FLAT" && activeOffer.flatAmountMinor) {
-      discountMinor = activeOffer.flatAmountMinor;
+      primaryDiscountMinor = activeOffer.flatAmountMinor;
     }
   }
 
-  const guestCount = Math.max(0, selectedSeats.length - 1);
-  let groupBonusMinor = 0;
-  if (activeOffer && activeOffer.groupBonusPerHead > 0 && guestCount > 0) {
-    const heads = Math.min(guestCount, activeOffer.groupBonusMaxHeads);
-    groupBonusMinor = Math.round(baseTotalMinor * (activeOffer.groupBonusPerHead / 100) * heads);
+  // Colleague discount: 2% per colleague seat (uses groupBonusPerHead if the operator set it, else 2%)
+  const colleagueRate = activeOffer && activeOffer.groupBonusPerHead > 0 ? activeOffer.groupBonusPerHead : 2;
+  let colleagueDiscountMinor = 0;
+  if (guestCount > 0) {
+    const heads = activeOffer?.groupBonusMaxHeads ? Math.min(guestCount, activeOffer.groupBonusMaxHeads) : guestCount;
+    colleagueDiscountMinor = Math.round(pricePerSeat * (colleagueRate / 100) * heads);
   }
 
-  const totalDiscountMinor = discountMinor + groupBonusMinor;
+  const totalDiscountMinor = primaryDiscountMinor + colleagueDiscountMinor;
   const estimatedTotal = Math.max(0, baseTotalMinor - totalDiscountMinor);
 
   return (
@@ -391,27 +396,36 @@ function StepPassengers({
           <p className="text-sm font-bold">Fare Summary</p>
         </div>
         <div className="px-4 py-3 space-y-2 text-sm">
+          {/* Base fares */}
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{selectedSeats.length} seat{selectedSeats.length !== 1?"s":""} × ₹{(trip.basePriceMinor/100).toFixed(0)}</span>
-            <span>₹{(baseTotalMinor/100).toFixed(0)}</span>
+            <span className="text-muted-foreground">1 primary seat × ₹{(pricePerSeat/100).toFixed(0)}</span>
+            <span>₹{(pricePerSeat/100).toFixed(0)}</span>
           </div>
-          {discountMinor > 0 && (
-            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span>🎁 {activeOffer?.title} ({discountText(activeOffer!)})</span>
-              <span>− ₹{(discountMinor/100).toFixed(0)}</span>
+          {guestCount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{guestCount} colleague seat{guestCount>1?"s":""} × ₹{(pricePerSeat/100).toFixed(0)}</span>
+              <span>₹{(pricePerSeat * guestCount / 100).toFixed(0)}</span>
             </div>
           )}
-          {groupBonusMinor > 0 && (
+          {/* Primary traveler loyalty discount */}
+          {primaryDiscountMinor > 0 && (
             <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-              <span>👥 Group bonus ({guestCount} guest{guestCount>1?"s":""} × {activeOffer?.groupBonusPerHead}%)</span>
-              <span>− ₹{(groupBonusMinor/100).toFixed(0)}</span>
+              <span>🎁 Your deal — {activeOffer?.title} ({discountText(activeOffer!)})</span>
+              <span>− ₹{(primaryDiscountMinor/100).toFixed(0)}</span>
+            </div>
+          )}
+          {/* Colleague discount */}
+          {colleagueDiscountMinor > 0 && (
+            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span>👥 {guestCount} colleague{guestCount>1?"s":""} × {colleagueRate}% off</span>
+              <span>− ₹{(colleagueDiscountMinor/100).toFixed(0)}</span>
             </div>
           )}
           <div className="border-t border-border pt-2 flex justify-between font-black text-base">
             <span>Estimated Total</span>
             <span className="text-primary">₹{(estimatedTotal/100).toFixed(0)}</span>
           </div>
-          <p className="text-[10px] text-muted-foreground">* Final discount applied at payment. Taxes may apply.</p>
+          <p className="text-[10px] text-muted-foreground">* Your loyalty deal applies to your seat only. Final amount confirmed at payment.</p>
         </div>
       </div>
 
@@ -493,6 +507,7 @@ export default function BookTripPage() {
       toast.error("Seat selection error, please try again");
       return;
     }
+    const activeOffer = offers.find((o) => o.level === (progress?.currentLevel ?? "LEVEL_1")) ?? offers[0];
     setSubmitting(true);
     const res = await fetch("/api/bookings", {
       method: "POST",
@@ -501,6 +516,7 @@ export default function BookTripPage() {
         tripId,
         seatIds,
         passengers: passengers.map((p) => ({ name: p.name, age: parseInt(p.age), gender: p.gender, seatLabel: p.seatLabel })),
+        ...(activeOffer ? { appliedOfferId: activeOffer.id } : {}),
       }),
     });
     const json = await res.json();
