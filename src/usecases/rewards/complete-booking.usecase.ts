@@ -82,5 +82,5 @@ export async function completeBookingRewardsUseCase(
         },
       });
     }
-  });
+  }, { timeout: 15000 });
 }

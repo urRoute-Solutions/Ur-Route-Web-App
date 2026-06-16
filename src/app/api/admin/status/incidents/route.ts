@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ok, handleError } from "@/lib/http";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ incident }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return ok({ incident }, 201);
+  } catch (error) {
+    return handleError(error);
   }
 }

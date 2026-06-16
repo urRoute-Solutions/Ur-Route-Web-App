@@ -1,21 +1,25 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { getVectorIndex } from "@/lib/vector";
 import { KNOWLEDGE_BASE } from "@/lib/knowledge-base";
-import { NextResponse } from "next/server";
+import { ok, handleError } from "@/lib/http";
 
 export async function POST() {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  const index = getVectorIndex();
+    const index = getVectorIndex();
 
-  // Upstash built-in embeddings — pass `data` (text), not a vector
-  await index.upsert(
-    KNOWLEDGE_BASE.map((entry) => ({
-      id: entry.id,
-      data: entry.data,
-      metadata: entry.metadata,
-    }))
-  );
+    // Upstash built-in embeddings — pass `data` (text), not a vector
+    await index.upsert(
+      KNOWLEDGE_BASE.map((entry) => ({
+        id: entry.id,
+        data: entry.data,
+        metadata: entry.metadata,
+      }))
+    );
 
-  return NextResponse.json({ seeded: KNOWLEDGE_BASE.length });
+    return ok({ seeded: KNOWLEDGE_BASE.length });
+  } catch (error) {
+    return handleError(error);
+  }
 }

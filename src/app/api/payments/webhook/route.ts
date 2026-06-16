@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             where: { id: dbPayment.bookingId },
             data: { status: "CONFIRMED" },
           });
-        });
+        }, { timeout: 15000 });
       }
     }
 

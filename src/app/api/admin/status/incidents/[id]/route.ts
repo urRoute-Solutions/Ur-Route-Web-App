@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ok, handleError } from "@/lib/http";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { NotFoundError } from "@/lib/errors";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ export async function POST(
       where: { id },
       include: { services: { select: { serviceId: true } } },
     });
-    if (!incident) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!incident) throw new NotFoundError("Incident");
 
     const resolvedAt = input.status === "RESOLVED" ? new Date() : undefined;
 
@@ -49,8 +50,8 @@ export async function POST(
         : Promise.resolve(),
     ]);
 
-    return NextResponse.json({ incident: updated });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return ok({ incident: updated });
+  } catch (error) {
+    return handleError(error);
   }
 }

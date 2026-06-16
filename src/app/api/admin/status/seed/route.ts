@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { ok, handleError } from "@/lib/http";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
@@ -32,21 +32,21 @@ export async function POST() {
 
     // Backfill 90 days of OPERATIONAL stats for each service (skips if already exists)
     const today = new Date();
-    for (const svc of results) {
-      for (let i = 89; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        await prisma.statusDailyStat.upsert({
-          where: { serviceId_date: { serviceId: svc.id, date } },
-          create: { serviceId: svc.id, date, status: "OPERATIONAL", uptimePct: 100 },
-          update: {},
-        });
-      }
-    }
+    const days = Array.from({ length: 90 }, (_, i) => {
+      const date = new Date(today);
+      date.setDate(date.getDate() - (89 - i));
+      date.setHours(0, 0, 0, 0);
+      return date;
+    });
+    await prisma.statusDailyStat.createMany({
+      data: results.flatMap((svc) =>
+        days.map((date) => ({ serviceId: svc.id, date, status: "OPERATIONAL" as const, uptimePct: 100 })),
+      ),
+      skipDuplicates: true,
+    });
 
-    return NextResponse.json({ seeded: results.length });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return ok({ seeded: results.length });
+  } catch (error) {
+    return handleError(error);
   }
 }
