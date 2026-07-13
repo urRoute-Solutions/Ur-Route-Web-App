@@ -10,13 +10,17 @@ type SubjectType = "OPERATOR" | "USER" | null;
 
 export function TicketEntityPanel({ ticketId }: { ticketId: string }) {
   const [subjectType, setSubjectType] = useState<SubjectType | undefined>(undefined);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [urid, setUrid] = useState("");
   const [attaching, setAttaching] = useState(false);
 
   function load() {
     fetch(`/api/support/tickets/${ticketId}`)
       .then((r) => r.json())
-      .then((json) => setSubjectType(json.data?.ticket?.subjectEntityType ?? null))
+      .then((json) => {
+        setSubjectType(json.data?.ticket?.subjectEntityType ?? null);
+        setTicketNumber(json.data?.ticket?.ticketNumber ?? null);
+      })
       .catch(() => setSubjectType(null));
   }
 
@@ -69,5 +73,7 @@ export function TicketEntityPanel({ ticketId }: { ticketId: string }) {
     );
   }
 
-  return subjectType === "OPERATOR" ? <OperatorPanel ticketId={ticketId} /> : <UserPanel ticketId={ticketId} />;
+  return subjectType === "OPERATOR"
+    ? <OperatorPanel ticketId={ticketId} ticketNumber={ticketNumber} />
+    : <UserPanel ticketId={ticketId} ticketNumber={ticketNumber} />;
 }

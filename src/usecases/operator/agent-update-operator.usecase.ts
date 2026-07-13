@@ -91,9 +91,11 @@ export async function agentUpdateOperatorUseCase(
         metadata: {
           ticketId,
           ticketNumber: ticketNumber(ticket.ticketSeq),
+          agentName: agent?.fullName ?? null,
           agentUrid: agent?.urid ?? null,
           entityType: "OPERATOR",
           entityUrid: operator.urid,
+          entityName: operator.name,
           changedFields: changes.map((c) => c.field),
           oldValues: Object.fromEntries(changes.map((c) => [c.field, c.from])),
           newValues: Object.fromEntries(changes.map((c) => [c.field, c.to])),

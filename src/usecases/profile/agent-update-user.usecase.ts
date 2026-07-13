@@ -82,9 +82,11 @@ export async function agentUpdateUserUseCase(
         metadata: {
           ticketId,
           ticketNumber: ticketNumber(ticket.ticketSeq),
+          agentName: agent?.fullName ?? null,
           agentUrid: agent?.urid ?? null,
           entityType: "USER",
           entityUrid: subjectUser.urid,
+          entityName: subjectUser.fullName,
           changedFields: changes.map((c) => c.field),
           oldValues: Object.fromEntries(changes.map((c) => [c.field, c.from])),
           newValues: Object.fromEntries(changes.map((c) => [c.field, c.to])),

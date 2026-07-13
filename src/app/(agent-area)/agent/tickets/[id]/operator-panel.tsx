@@ -62,7 +62,7 @@ const fade = {
   transition: { duration: 0.2 },
 };
 
-export function OperatorPanel({ ticketId }: { ticketId: string }) {
+export function OperatorPanel({ ticketId, ticketNumber }: { ticketId: string; ticketNumber: string | null }) {
   const [operator, setOperator] = useState<OperatorSummary | null | undefined>(undefined);
   const [routes, setRoutes] = useState<RouteSummary[]>([]);
   const [offerLevels, setOfferLevels] = useState<OfferLevelSummary[]>([]);
@@ -339,9 +339,10 @@ export function OperatorPanel({ ticketId }: { ticketId: string }) {
           <motion.div key="summary" {...fade} className="space-y-3">
             <p className="text-sm font-bold text-white">Changes Summary</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Ticket Number</p><p className="font-mono text-slate-200">{ticketNumber ?? "—"}</p></div>
+              <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Entity</p><p className="text-slate-200">Operator · {operator.name}</p></div>
               <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Support Agent</p><p className="text-slate-200">{agent?.fullName ?? "—"}</p></div>
               <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Support Agent URID</p><p className="font-mono text-slate-200">{agent?.urid ?? "—"}</p></div>
-              <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Entity</p><p className="text-slate-200">Operator · {operator.name}</p></div>
               <div><p className="text-slate-500 uppercase text-[10px] font-semibold">Operator URID</p><p className="font-mono text-slate-200">{operator.urid}</p></div>
             </div>
             <div>
@@ -375,7 +376,7 @@ export function OperatorPanel({ ticketId }: { ticketId: string }) {
         {step === "resolved" && result && (
           <motion.div key="resolved" {...fade} className="space-y-1.5">
             <p className="flex items-center gap-1.5 text-sm font-bold text-green-400">
-              <CheckCircle2 className="h-4 w-4" /> Ticket Successfully Resolved
+              <CheckCircle2 className="h-4 w-4" /> Ticket <span className="font-mono">{result.ticketNumber}</span> Successfully Resolved
             </p>
             <p className="text-xs text-slate-400">Audit Log Created — Reference <span className="font-mono text-slate-200">{result.auditReference}</span></p>
           </motion.div>
