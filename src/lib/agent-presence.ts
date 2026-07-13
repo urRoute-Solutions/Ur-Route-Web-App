@@ -25,7 +25,11 @@ export async function setAgentOffline(agentId: string): Promise<void> {
 export async function refreshHeartbeat(agentId: string): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
-  await redis.set(heartbeatKey(agentId), "1", { ex: HEARTBEAT_TTL });
+  // Also re-add to the SET in case the agent was pruned (TTL expired between heartbeats)
+  await Promise.all([
+    redis.set(heartbeatKey(agentId), "1", { ex: HEARTBEAT_TTL }),
+    redis.sadd(SET_KEY, agentId),
+  ]);
 }
 
 export async function getOnlineAgentIds(): Promise<string[]> {

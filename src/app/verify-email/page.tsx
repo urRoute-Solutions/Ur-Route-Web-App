@@ -1,6 +1,17 @@
 import Link from "next/link";
-import { CheckCircle, XCircle, Mail } from "lucide-react";
+import { CheckCircle, XCircle, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+function BackToHome() {
+  return (
+    <Link
+      href="/"
+      className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-4 w-4" /> Back to home
+    </Link>
+  );
+}
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -11,7 +22,10 @@ export default async function VerifyEmailPage({
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-background">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 dark:bg-background">
+        <div className="w-full max-w-md">
+          <BackToHome />
+        </div>
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
             <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -30,7 +44,10 @@ export default async function VerifyEmailPage({
 
   if (error === "expired" || error === "missing") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-background">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 dark:bg-background">
+        <div className="w-full max-w-md">
+          <BackToHome />
+        </div>
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/30">
             <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
@@ -49,7 +66,10 @@ export default async function VerifyEmailPage({
 
   // Generic landing — user navigated here directly
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-background">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 dark:bg-background">
+      <div className="w-full max-w-md">
+        <BackToHome />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           <Mail className="h-8 w-8 text-primary" />

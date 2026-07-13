@@ -23,18 +23,47 @@ interface AgentNavProps {
   email: string;
 }
 
+const PREF_KEY = "ur:agent:online";
+
 function useAgentPresence() {
-  const [online, setOnline] = useState(false);
+  // Read localStorage immediately so there's no offline flash on page refresh
+  const [online, setOnline] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(PREF_KEY) === "1";
+    }
+    return false;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const wantedOnline = localStorage.getItem(PREF_KEY) === "1";
+
+    // If the agent wanted to be online, immediately re-register in Redis.
+    // This handles page refreshes where the Redis TTL may have been close
+    // to expiring, ensuring they're in the online set before any ticket
+    // assignment runs.
+    if (wantedOnline) {
+      fetch("/api/support/agent/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ online: true }),
+      }).catch(() => {});
+    }
+
+    // Then verify server truth and sync local state
     fetch("/api/support/agent/status")
       .then((r) => r.json())
-      .then((j) => setOnline(j.data?.online ?? false))
+      .then((j) => {
+        const isOnline = j.data?.online ?? false;
+        setOnline(isOnline);
+        if (isOnline) localStorage.setItem(PREF_KEY, "1");
+        else localStorage.removeItem(PREF_KEY);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  // Heartbeat every 25s (TTL is 60s — gives 2+ heartbeats per window)
   useEffect(() => {
     if (!online) return;
     const interval = setInterval(() => {
@@ -43,7 +72,7 @@ function useAgentPresence() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "heartbeat" }),
       }).catch(() => {});
-    }, 40_000);
+    }, 25_000);
     return () => clearInterval(interval);
   }, [online]);
 
@@ -58,6 +87,8 @@ function useAgentPresence() {
     setLoading(false);
     if (res.ok) {
       setOnline(next);
+      if (next) localStorage.setItem(PREF_KEY, "1");
+      else localStorage.removeItem(PREF_KEY);
       toast.success(next ? "You are now online — tickets will be assigned" : "You are offline");
     }
   }
