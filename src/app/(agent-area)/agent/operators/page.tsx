@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Building2, Search, MapPin, ArrowRight, BookOpen, Bus } from "lucide-react";
+import { Building2, Search, MapPin, ArrowRight, BookOpen, Bus, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface LookupResult {
   operator: {
@@ -52,6 +53,9 @@ export default function AgentOperatorLookupPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
+      <Link href="/agent/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-black text-white">Operator Lookup</h1>
         <p className="mt-1 text-sm text-slate-400">

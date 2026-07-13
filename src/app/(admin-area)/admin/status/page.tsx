@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ExternalLink, CheckCircle, AlertTriangle } from "lucide-react";
+import { ExternalLink, CheckCircle, AlertTriangle, ArrowLeft } from "lucide-react";
 import { IncidentForm } from "./incident-form";
 import { UpdateIncidentForm } from "./update-form";
 import { SeedStatusButton } from "./seed-button";
@@ -50,6 +50,9 @@ export default async function AdminStatusPage() {
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black">Status Management</h1>

@@ -68,7 +68,12 @@ export function OperatorPanel({ ticketId, ticketNumber }: { ticketId: string; ti
   const [offerLevels, setOfferLevels] = useState<OfferLevelSummary[]>([]);
   const [agent, setAgent] = useState<AgentIdentity | null>(null);
 
-  const [step, setStep] = useState<Step>("verify");
+  const [step, setStep] = useState<Step>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem(`agent:verified:${ticketId}`) === "1" ? "unlocked" : "verify";
+    }
+    return "verify";
+  });
   const [verifyUrid, setVerifyUrid] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifyFailed, setVerifyFailed] = useState(false);
@@ -113,6 +118,7 @@ export function OperatorPanel({ ticketId, ticketNumber }: { ticketId: string; ti
     const json = await res.json();
     setVerifying(false);
     if (res.ok && json.data?.verified) {
+      sessionStorage.setItem(`agent:verified:${ticketId}`, "1");
       setStep("unlocked");
     } else {
       setVerifyFailed(true);
@@ -169,6 +175,7 @@ export function OperatorPanel({ ticketId, ticketNumber }: { ticketId: string; ti
     setSaving(false);
     if (res.ok) {
       setResult({ auditReference: json.data.auditReference, ticketNumber: json.data.ticketNumber });
+      sessionStorage.removeItem(`agent:verified:${ticketId}`);
       setStep("resolved");
       load();
     } else {

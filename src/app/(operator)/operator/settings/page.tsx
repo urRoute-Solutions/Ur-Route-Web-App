@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, Settings, Clock } from "lucide-react";
+import { Plus, Trash2, Settings, Clock, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface Tier {
   hoursBeforeDeparture: number;
@@ -66,6 +67,9 @@ export default function OperatorSettingsPage() {
 
   return (
     <div className="p-6 max-w-2xl space-y-8">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-black flex items-center gap-2">
           <Settings className="h-6 w-6 text-primary" />

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Check, Users, Link2, Gift, Share2 } from "lucide-react";
+import { Copy, Check, Users, Link2, Gift, Share2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,9 @@ export default function ReferralPage() {
     <div className="min-h-screen bg-background">
       <div className="bg-white dark:bg-card border-b border-border">
         <div className="container py-6">
+          <Link href="/dashboard" className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Dashboard
+          </Link>
           <h1 className="text-2xl font-extrabold tracking-tight">Refer Friends</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Share urRoute and grow together</p>
         </div>

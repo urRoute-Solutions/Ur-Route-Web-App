@@ -3,7 +3,7 @@ import { supportTicketRepository } from "@/repositories/support-ticket.repositor
 import Link from "next/link";
 import { StatusUpdater } from "./status-updater";
 import { SeedKnowledgeBase } from "./seed-button";
-import { MessageSquare, Inbox } from "lucide-react";
+import { MessageSquare, Inbox, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -42,6 +42,9 @@ export default async function AdminSupportPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl">
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black">Support — All Tickets</h1>

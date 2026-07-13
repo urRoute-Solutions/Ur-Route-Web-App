@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ContactForm } from "./contact-form";
+import { getDashboardHref } from "@/lib/auth/dashboard-href";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -31,10 +32,11 @@ const DETAILS = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const dashboardHref = await getDashboardHref();
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader dashboardHref={dashboardHref} />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary/5 to-background px-4 pb-12 pt-32">

@@ -3,8 +3,20 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import { User as UserIcon, ShieldCheck, ShieldAlert, Eye, Pencil, ArrowLeft, CheckCircle2, Ticket } from "lucide-react";
+import {
+  User as UserIcon,
+  ShieldCheck,
+  ShieldAlert,
+  Eye,
+  Pencil,
+  ArrowLeft,
+  CheckCircle2,
+  Ticket,
+  ExternalLink,
+  RefreshCw,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface UserSummary {
   id: string;
@@ -16,7 +28,13 @@ interface UserSummary {
   createdAt: string;
 }
 
-interface BookingSummary { id: string; pnr: string; status: string; totalFareMinor: number; createdAt: string }
+interface BookingSummary {
+  id: string;
+  pnr: string;
+  status: string;
+  totalFareMinor: number;
+  createdAt: string;
+}
 interface AgentIdentity { fullName: string; urid: string | null }
 
 const BASIC_DETAIL_FIELDS = [
@@ -39,12 +57,30 @@ const fade = {
   transition: { duration: 0.2 },
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  CONFIRMED: "text-green-400",
+  CANCELLED: "text-red-400",
+  PENDING: "text-yellow-400",
+  COMPLETED: "text-slate-400",
+};
+
+function verifiedKey(ticketId: string) {
+  return `agent:verified:${ticketId}`;
+}
+
 export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticketNumber: string | null }) {
   const [subjectUser, setSubjectUser] = useState<UserSummary | null | undefined>(undefined);
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
+  const [showAllBookings, setShowAllBookings] = useState(false);
   const [agent, setAgent] = useState<AgentIdentity | null>(null);
 
-  const [step, setStep] = useState<Step>("verify");
+  // Persist verification within the browser session so re-mounting doesn't re-ask
+  const [step, setStep] = useState<Step>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem(verifiedKey(ticketId)) === "1" ? "unlocked" : "verify";
+    }
+    return "verify";
+  });
   const [verifyUrid, setVerifyUrid] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifyFailed, setVerifyFailed] = useState(false);
@@ -70,7 +106,10 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((json) => { const u = json.data?.user; if (u) setAgent({ fullName: u.fullName, urid: u.urid }); })
+      .then((json) => {
+        const u = json.data?.user;
+        if (u) setAgent({ fullName: u.fullName, urid: u.urid });
+      })
       .catch(() => {});
   }, []);
 
@@ -88,6 +127,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
     const json = await res.json();
     setVerifying(false);
     if (res.ok && json.data?.verified) {
+      sessionStorage.setItem(verifiedKey(ticketId), "1");
       setStep("unlocked");
     } else {
       setVerifyFailed(true);
@@ -137,6 +177,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
     setSaving(false);
     if (res.ok) {
       setResult({ auditReference: json.data.auditReference, ticketNumber: json.data.ticketNumber });
+      sessionStorage.removeItem(verifiedKey(ticketId));
       setStep("resolved");
       load();
     } else {
@@ -153,6 +194,8 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
     );
   }
 
+  const displayedBookings = showAllBookings ? bookings : bookings.slice(0, 3);
+
   return (
     <div className="shrink-0 border-b border-slate-800 bg-slate-900/60 px-4 py-3">
       <AnimatePresence mode="wait">
@@ -163,6 +206,8 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
               <span>Entity Type <strong className="text-slate-200">User</strong></span>
               <span className="text-slate-600">·</span>
               <span>Entity URID <strong className="font-mono text-slate-200">{subjectUser.urid}</strong></span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-300 font-medium">{subjectUser.fullName}</span>
             </div>
             <form onSubmit={handleVerify} className="flex items-center gap-2">
               <input
@@ -215,7 +260,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
         )}
 
         {step === "view" && (
-          <motion.div key="view" {...fade} className="space-y-4">
+          <motion.div key="view" {...fade} className="space-y-3">
             <div>
               <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Basic details</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
@@ -229,24 +274,60 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Recent bookings ({bookings.length})</p>
-              {bookings.length === 0 ? <p className="text-xs text-slate-500">No bookings yet.</p> : (
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] font-semibold text-slate-500 uppercase">
+                  Bookings ({bookings.length})
+                </p>
+                <button
+                  onClick={load}
+                  className="text-slate-500 hover:text-slate-300 transition-colors"
+                  title="Refresh bookings"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </button>
+              </div>
+              {bookings.length === 0 ? (
+                <p className="text-xs text-slate-500">No bookings yet.</p>
+              ) : (
                 <div className="space-y-1">
-                  {bookings.map((b) => (
-                    <div key={b.id} className="flex items-center gap-2 text-xs">
+                  {displayedBookings.map((b) => (
+                    <div key={b.id} className="flex items-center gap-2 text-xs rounded-md bg-slate-800/50 px-2 py-1.5">
                       <Ticket className="h-3 w-3 text-slate-500 shrink-0" />
-                      <span className="font-mono text-slate-200">{b.pnr}</span>
-                      <span className="text-slate-400">₹{(b.totalFareMinor / 100).toFixed(0)}</span>
-                      <span className="ml-auto text-[9px] font-bold uppercase text-slate-400">{b.status}</span>
+                      <span className="font-mono text-slate-200 text-[10px]">{b.pnr}</span>
+                      <span className="text-slate-400 text-[10px]">₹{(b.totalFareMinor / 100).toFixed(0)}</span>
+                      <span className={cn("ml-auto text-[9px] font-bold uppercase shrink-0", STATUS_COLORS[b.status] ?? "text-slate-400")}>
+                        {b.status}
+                      </span>
+                      <Link
+                        href={`/admin/bookings/${b.id}`}
+                        target="_blank"
+                        className="shrink-0 text-slate-500 hover:text-blue-400 transition-colors"
+                        title="View booking detail"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
                     </div>
                   ))}
+                  {bookings.length > 3 && (
+                    <button
+                      onClick={() => setShowAllBookings((v) => !v)}
+                      className="text-[10px] font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      {showAllBookings ? "Show less" : `Show all ${bookings.length} bookings`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
-            <button onClick={startEdit} className="flex items-center gap-1 rounded-md bg-purple-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-colors">
-              <Pencil className="h-3 w-3" /> Edit Profile
-            </button>
+            <div className="flex gap-2">
+              <button onClick={startEdit} className="flex items-center gap-1 rounded-md bg-purple-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-colors">
+                <Pencil className="h-3 w-3" /> Edit Profile
+              </button>
+              <button onClick={() => setStep("unlocked")} className="rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors">
+                Back
+              </button>
+            </div>
           </motion.div>
         )}
 

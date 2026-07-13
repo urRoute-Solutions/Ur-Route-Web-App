@@ -1,8 +1,9 @@
 import { requireOperator } from "@/lib/auth/session";
 import { getOperatorAnalyticsUseCase } from "@/usecases/analytics/get-analytics.usecase";
 import { prisma } from "@/lib/prisma";
-import { BarChart3, TrendingUp, Users, BookOpen, Percent } from "lucide-react";
+import { BarChart3, TrendingUp, Users, BookOpen, Percent, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 function fmt(minor: number) {
   return `₹${(minor / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -59,6 +60,9 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="p-6 max-w-5xl space-y-6">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-black text-foreground">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">Last 30 days — {from} to {to}</p>

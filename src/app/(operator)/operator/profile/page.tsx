@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Building2, Phone, Mail, MapPin, Globe, Copy } from "lucide-react";
+import { Building2, Phone, Mail, MapPin, Globe, Copy, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface OperatorProfile {
   id: string;
@@ -89,6 +90,9 @@ export default function OperatorProfilePage() {
 
   return (
     <div className="p-6 max-w-lg space-y-6">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-black">Operator Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your company details shown to travelers.</p>

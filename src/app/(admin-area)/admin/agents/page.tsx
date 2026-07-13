@@ -1,7 +1,8 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOnlineAgentIds } from "@/lib/agent-presence";
-import { UserCheck, Headphones } from "lucide-react";
+import { UserCheck, Headphones, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CreateAgentForm } from "./create-agent-form";
 
@@ -22,6 +23,9 @@ export default async function AdminAgentsPage() {
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black">Support Agents</h1>

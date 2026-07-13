@@ -23,7 +23,7 @@ interface TravelerNavProps {
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2.5 shrink-0">
+    <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
       <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
         <Bus className="h-4 w-4 text-white" />
       </div>

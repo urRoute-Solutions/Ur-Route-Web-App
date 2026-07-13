@@ -4,6 +4,7 @@ import { Eye, ShieldCheck, Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { getDashboardHref } from "@/lib/auth/dashboard-href";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -35,10 +36,11 @@ const STATS = [
   { value: "10K+", label: "Riders" },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const dashboardHref = await getDashboardHref();
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader dashboardHref={dashboardHref} />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary/5 to-background px-4 pb-16 pt-32">

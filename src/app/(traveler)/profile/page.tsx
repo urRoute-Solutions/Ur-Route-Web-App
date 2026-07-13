@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { User, Phone, Mail } from "lucide-react";
+import { User, Phone, Mail, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface ProfileData {
   id: string;
@@ -60,6 +61,9 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 max-w-lg space-y-6">
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <h1 className="text-2xl font-bold">My Profile</h1>
 
       <Card>

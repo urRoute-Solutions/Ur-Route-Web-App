@@ -1,7 +1,8 @@
 import { requireOperator } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { TrendingUp, IndianRupee, BookOpen, Users } from "lucide-react";
+import { TrendingUp, IndianRupee, BookOpen, Users, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 function fmt(minor: number) {
   return `₹${(minor / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -97,6 +98,9 @@ export default async function RevenuePage() {
 
   return (
     <div className="p-6 max-w-5xl space-y-6">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-black text-foreground">Revenue</h1>
         <p className="mt-1 text-sm text-muted-foreground">Earnings from confirmed and completed bookings.</p>

@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Gift, Star, Lock, CheckCircle } from "lucide-react";
+import { Gift, Star, Lock, CheckCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 const LEVEL_META = {
   LEVEL_1: { label: "Welcome", color: "bg-slate-400", textColor: "text-slate-600", max: 4 },
@@ -22,6 +23,9 @@ export default async function RewardsPage() {
 
   return (
     <div className="p-6 max-w-3xl space-y-8">
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-center gap-3">
         <Gift className="h-6 w-6 text-reward" />
         <h1 className="text-2xl font-bold">My Rewards</h1>

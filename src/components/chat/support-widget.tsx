@@ -238,13 +238,22 @@ export function SupportWidget() {
       if (!res.ok) {
         if (res.status === 401) {
           setPhase({ name: "home" });
-          pushBot("Please sign in to create a support ticket.");
+          setMessages((prev) =>
+            prev.filter((m) => m.from !== "typing").concat({
+              from: "bot",
+              text: "You need to sign in to create a support ticket.",
+              options: [{ label: "Sign in", id: "signin" }],
+            })
+          );
           return;
         }
         throw new Error("Failed");
       }
 
-      const { ticket } = await res.json();
+      const json = await res.json();
+      const ticket = json.data?.ticket;
+      if (!ticket) throw new Error("Invalid response");
+
       setPhase({ name: "success", ticketNumber: ticket.ticketNumber });
       setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({
         from: "bot",
@@ -431,6 +440,17 @@ export function SupportWidget() {
                                 className="rounded-xl border border-primary/20 bg-white px-3.5 py-2 text-left text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-primary hover:text-white dark:bg-card"
                               >
                                 View my tickets
+                              </Link>
+                            );
+                          }
+                          if (opt.id === "signin") {
+                            return (
+                              <Link
+                                key={j}
+                                href="/login"
+                                className="rounded-xl border border-action/30 bg-white px-3.5 py-2 text-left text-sm font-semibold text-action shadow-sm transition-colors hover:bg-action hover:text-white dark:bg-card"
+                              >
+                                Sign in to continue →
                               </Link>
                             );
                           }

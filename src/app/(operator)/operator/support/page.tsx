@@ -3,7 +3,7 @@ import { supportTicketRepository } from "@/repositories/support-ticket.repositor
 import { operatorRepository } from "@/repositories/operator.repository";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Inbox } from "lucide-react";
+import { MessageSquare, Inbox, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RaiseTicketDialog } from "./raise-ticket-dialog";
 
@@ -33,6 +33,9 @@ export default async function OperatorSupportPage() {
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-foreground">Support Tickets</h1>

@@ -1,7 +1,8 @@
 import { requireRole } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Bus, Building2 } from "lucide-react";
+import { TrendingUp, Users, Bus, Building2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminAnalyticsPage() {
   await requireRole("ADMIN");
@@ -24,6 +25,9 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="p-6 max-w-4xl space-y-8">
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <h1 className="text-2xl font-bold">Analytics</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

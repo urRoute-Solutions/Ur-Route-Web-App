@@ -4,7 +4,21 @@ import { getGroq } from "@/lib/groq";
 import { getVectorIndex } from "@/lib/vector";
 
 export async function autoAssignTicket(ticketId: string): Promise<void> {
-  const agentIds = await getOnlineAgentIds();
+  let agentIds = await getOnlineAgentIds();
+
+  // Redis fallback: if Redis is unavailable or no agents are online via presence,
+  // fall back to any AGENT-role user who has been active in the last 24 hours.
+  if (agentIds.length === 0) {
+    const recentAgents = await prisma.user.findMany({
+      where: {
+        role: "AGENT",
+        deletedAt: null,
+        lastLoginAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true },
+    });
+    agentIds = recentAgents.map((a) => a.id);
+  }
 
   if (agentIds.length === 0) {
     await botRespond(ticketId);

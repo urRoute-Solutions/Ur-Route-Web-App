@@ -2,7 +2,8 @@ import { requireOperator } from "@/lib/auth/session";
 import { bookingRepository } from "@/repositories/booking.repository";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Users, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function OperatorBookingsPage() {
   const { operatorId } = await requireOperator();
@@ -10,6 +11,9 @@ export default async function OperatorBookingsPage() {
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
+      <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Bookings</h1>
         <p className="text-sm text-muted-foreground">{total} total</p>

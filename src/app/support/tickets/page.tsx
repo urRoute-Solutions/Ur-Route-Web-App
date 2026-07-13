@@ -3,7 +3,7 @@ import { supportTicketRepository } from "@/repositories/support-ticket.repositor
 import { userRepository } from "@/repositories/user.repository";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ChevronRight, Ticket } from "lucide-react";
+import { MessageSquare, ChevronRight, Ticket, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RaiseTicketDialog } from "./raise-ticket-dialog";
 
@@ -40,6 +40,12 @@ export default async function MyTicketsPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-background">
       <div className="container max-w-3xl py-10">
+        <Link
+          href="/dashboard"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Dashboard
+        </Link>
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-foreground">My Support Tickets</h1>
@@ -87,7 +93,7 @@ export default async function MyTicketsPage() {
                     </div>
                     <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{t.subject}</p>
                     <p className="text-xs text-muted-foreground">
-                      {CATEGORY_LABEL[t.category]} &middot; {new Date(t.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      {CATEGORY_LABEL[t.category]} &middot; {new Date(t.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>

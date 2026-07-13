@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { getDashboardHref } from "@/lib/auth/dashboard-href";
 import {
   Accordion,
   AccordionItem,
@@ -50,10 +51,11 @@ const FAQS = [
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const dashboardHref = await getDashboardHref();
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader dashboardHref={dashboardHref} />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary/5 to-background px-4 pb-12 pt-32">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { getDashboardHref } from "@/lib/auth/dashboard-href";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -54,10 +55,11 @@ const SECTIONS = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const dashboardHref = await getDashboardHref();
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader dashboardHref={dashboardHref} />
 
       <section className="px-4 pb-8 pt-32">
         <div className="container mx-auto max-w-3xl">
