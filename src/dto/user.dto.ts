@@ -12,6 +12,7 @@ export interface UserDTO {
   role: User["role"];
   avatarUrl: string | null;
   referralCode: string;
+  urid: string | null;
   emailVerified: boolean;
   createdAt: string;
 }
@@ -25,6 +26,7 @@ export function toUserDTO(user: User): UserDTO {
     role: user.role,
     avatarUrl: user.avatarUrl,
     referralCode: user.referralCode,
+    urid: user.urid,
     emailVerified: user.emailVerified,
     createdAt: user.createdAt.toISOString(),
   };

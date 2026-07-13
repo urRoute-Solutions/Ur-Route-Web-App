@@ -323,8 +323,8 @@ export default function HomePage() {
   }
 
   const searchHref = `/search?${new URLSearchParams({
-    ...(from ? { from } : {}),
-    ...(to ? { to } : {}),
+    ...(from ? { origin: from } : {}),
+    ...(to ? { destination: to } : {}),
     ...(date ? { date } : {}),
   }).toString()}`;
 
@@ -757,7 +757,7 @@ export default function HomePage() {
                 Set your own loyalty rewards per tier, manage bookings, and grow passenger retention — all from one dashboard.
               </p>
               <Button variant="action" size="lg" className="mt-7 w-full font-bold" asChild>
-                <Link href="/register">
+                <Link href="/register/operator">
                   Register as Operator <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

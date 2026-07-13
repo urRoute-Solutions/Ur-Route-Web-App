@@ -1,9 +1,11 @@
 import { requireOperator } from "@/lib/auth/session";
 import { supportTicketRepository } from "@/repositories/support-ticket.repository";
+import { operatorRepository } from "@/repositories/operator.repository";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RaiseTicketDialog } from "./raise-ticket-dialog";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-blue-50 text-blue-700 border-blue-200",
@@ -21,18 +23,24 @@ const PRIORITY_DOT: Record<string, string> = {
 
 export default async function OperatorSupportPage() {
   const { operatorId } = await requireOperator();
-  const tickets = await supportTicketRepository.listByOperator(operatorId);
+  const [tickets, operator] = await Promise.all([
+    supportTicketRepository.listByOperator(operatorId),
+    operatorRepository.findById(operatorId),
+  ]);
 
   const open = tickets.filter((t) => t.status === "OPEN").length;
   const urgent = tickets.filter((t) => t.priority === "URGENT").length;
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-foreground">Support Tickets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Complaints and queries raised about your service.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-foreground">Support Tickets</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Complaints and queries about your account, plus anything you raise yourself.
+          </p>
+        </div>
+        {operator && <RaiseTicketDialog urid={operator.urid} />}
       </div>
 
       {/* Summary */}

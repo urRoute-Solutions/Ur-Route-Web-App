@@ -3,7 +3,7 @@ import { userRepository } from "@/repositories/user.repository";
 import { tokenService, type IssuedTokens } from "@/services/token.service";
 import { auditService } from "@/services/audit.service";
 import { toUserDTO, type UserDTO } from "@/dto/user.dto";
-import { generateReferralCode } from "@/utils/ids";
+import { generateReferralCode, generateUrid } from "@/utils/ids";
 import type { AuthPrincipal } from "@/types/auth";
 
 interface RequestMeta {
@@ -45,14 +45,16 @@ export async function resolveExternalLoginUseCase(
   let created = false;
 
   if (!user) {
+    const role = identity.role ?? "TRAVELER";
     user = await userRepository.create({
       fullName: identity.fullName?.trim() || identity.email.split("@")[0]!,
       email: identity.email,
       phone: identity.phone ?? undefined,
       passwordHash: "", // passwordless account — cannot log in with a password
       referralCode: await uniqueReferralCode(),
+      urid: role === "TRAVELER" ? await uniqueUrid() : undefined,
       emailVerified: identity.emailVerified ?? false,
-      role: identity.role ?? "TRAVELER",
+      role,
     });
     created = true;
   }
@@ -88,4 +90,13 @@ async function uniqueReferralCode(): Promise<string> {
     if (!(await userRepository.findByReferralCode(code))) return code;
   }
   return generateReferralCode(10);
+}
+
+/** Retry URID generation on the (rare) unique collision. */
+async function uniqueUrid(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const urid = generateUrid("USR");
+    if (!(await userRepository.findByUrid(urid))) return urid;
+  }
+  return generateUrid("USR", 9);
 }

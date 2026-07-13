@@ -18,7 +18,22 @@ export async function updateOperatorUseCase(
     throw new ForbiddenError();
   }
 
-  const updated = await operatorRepository.update(operatorId, input);
+  // `status` is admin-only — an operator can never self-activate/suspend.
+  const { status, ...rest } = input;
+  const data = principal.role === "ADMIN" ? { ...rest, status } : rest;
+
+  const updated = await operatorRepository.update(operatorId, data);
+
+  if (status && principal.role === "ADMIN" && status !== operator.status) {
+    auditService.record({
+      action: "OPERATOR_STATUS_CHANGED",
+      actorId: principal.userId,
+      operatorId: operator.id,
+      entity: "Operator",
+      entityId: operator.id,
+      metadata: { from: operator.status, to: status },
+    });
+  }
 
   auditService.record({
     action: "OPERATOR_UPDATED",

@@ -2,8 +2,17 @@ import { ConflictError, ForbiddenError } from "@/lib/errors";
 import { operatorRepository } from "@/repositories/operator.repository";
 import { toOperatorDTO, type OperatorDTO } from "@/dto/operator.dto";
 import { auditService } from "@/services/audit.service";
+import { generateUrid } from "@/utils/ids";
 import type { CreateOperatorInput } from "@/validators/operator";
 import type { AuthPrincipal } from "@/types/auth";
+
+async function uniqueUrid(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const urid = generateUrid("OPR");
+    if (!(await operatorRepository.findByUrid(urid))) return urid;
+  }
+  return generateUrid("OPR", 9); // fallback: longer code, negligible collision odds
+}
 
 export async function createOperatorUseCase(
   input: CreateOperatorInput,
@@ -25,6 +34,7 @@ export async function createOperatorUseCase(
     owner: { connect: { id: principal.userId } },
     name: input.name,
     slug: input.slug,
+    urid: await uniqueUrid(),
     description: input.description,
     contactEmail: input.contactEmail,
     contactPhone: input.contactPhone,

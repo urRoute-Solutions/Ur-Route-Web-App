@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Bot, User, Wrench, CheckCircle, XCircle } from "lucide
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { TicketEntityPanel } from "./ticket-entity-panel";
 
 interface Message {
   id: string;
@@ -88,6 +89,7 @@ export default function AgentTicketPage() {
   const [sending, setSending] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const lastTimestampRef = useRef<string | null>(null);
+  const pollingRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -118,19 +120,31 @@ export default function AgentTicketPage() {
 
   // Poll for new messages every 3 seconds
   const pollMessages = useCallback(async () => {
-    const url = `/api/support/tickets/${id}/messages${lastTimestampRef.current ? `?after=${encodeURIComponent(lastTimestampRef.current)}` : ""}`;
-    const res = await fetch(url);
-    if (!res.ok) return;
-    const json = await res.json();
-    const newMsgs: Message[] = json.data?.messages ?? [];
-    const newMeta = json.data?.meta;
+    // Guard against overlapping calls (interval tick racing a manual poll
+    // after send/claim) sharing a stale cursor and double-appending.
+    if (pollingRef.current) return;
+    pollingRef.current = true;
+    try {
+      const url = `/api/support/tickets/${id}/messages${lastTimestampRef.current ? `?after=${encodeURIComponent(lastTimestampRef.current)}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      const newMsgs: Message[] = json.data?.messages ?? [];
+      const newMeta = json.data?.meta;
 
-    if (newMsgs.length > 0) {
-      setMessages((prev) => [...prev, ...newMsgs]);
-      lastTimestampRef.current = newMsgs[newMsgs.length - 1]!.createdAt;
-    }
-    if (newMeta) {
-      setMeta((prev) => prev ? { ...prev, ...newMeta } : null);
+      if (newMsgs.length > 0) {
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const unique = newMsgs.filter((m) => !existingIds.has(m.id));
+          return unique.length > 0 ? [...prev, ...unique] : prev;
+        });
+        lastTimestampRef.current = newMsgs[newMsgs.length - 1]!.createdAt;
+      }
+      if (newMeta) {
+        setMeta((prev) => prev ? { ...prev, ...newMeta } : null);
+      }
+    } finally {
+      pollingRef.current = false;
     }
   }, [id]);
 
@@ -249,6 +263,8 @@ export default function AgentTicketPage() {
           </div>
         </div>
       </div>
+
+      <TicketEntityPanel ticketId={id} />
 
       {/* Messages */}
       <div className="flex-1 overflow-auto px-4 py-4 space-y-4">

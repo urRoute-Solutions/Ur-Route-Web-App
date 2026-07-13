@@ -19,9 +19,31 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await requireAuth();
+    const principal = await requireAuth();
     const body = createSchema.parse(await req.json());
-    const ticket = await supportTicketRepository.create({ userId, ...body });
+
+    // Self-raised tickets (Operator or Traveler) are always about the
+    // raiser's own account — attach it authoritatively server-side, with the
+    // Entity Type set too, rather than trusting/needing client input.
+    let operatorId = body.operatorId;
+    let subjectUserId: string | undefined;
+    let subjectEntityType: "OPERATOR" | "USER" | undefined;
+
+    if (principal.role === "OPERATOR" && principal.operatorId) {
+      operatorId = principal.operatorId;
+      subjectEntityType = "OPERATOR";
+    } else if (principal.role === "TRAVELER") {
+      subjectUserId = principal.userId;
+      subjectEntityType = "USER";
+    }
+
+    const ticket = await supportTicketRepository.create({
+      userId: principal.userId,
+      ...body,
+      operatorId,
+      subjectUserId,
+      subjectEntityType,
+    });
     // Fire-and-forget: assign to agent or trigger bot fallback
     autoAssignTicket(ticket.id).catch(() => {});
     return ok({ ticket }, 201);

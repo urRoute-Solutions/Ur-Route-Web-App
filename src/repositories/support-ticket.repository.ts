@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { TicketCategory, TicketPriority, TicketStatus } from "@prisma/client";
+import type { TicketCategory, TicketPriority, TicketStatus, TicketSubjectType } from "@prisma/client";
 
 export type CreateTicketInput = {
   userId: string;
@@ -10,6 +10,8 @@ export type CreateTicketInput = {
   description: string;
   bookingRef?: string;
   operatorId?: string;
+  subjectEntityType?: TicketSubjectType;
+  subjectUserId?: string;
 };
 
 function ticketNumber(seq: number) {
@@ -28,6 +30,8 @@ export const supportTicketRepository = {
         description: input.description,
         bookingRef: input.bookingRef || null,
         operatorId: input.operatorId || null,
+        subjectEntityType: input.subjectEntityType,
+        subjectUserId: input.subjectUserId,
         messages: {
           create: {
             senderRole: "USER",
@@ -105,6 +109,22 @@ export const supportTicketRepository = {
     return prisma.serviceTicketMessage.create({
       data: { ticketId, senderId, senderRole, body },
     });
+  },
+
+  async setOperator(ticketId: string, operatorId: string) {
+    const ticket = await prisma.serviceTicket.update({
+      where: { id: ticketId },
+      data: { operatorId, subjectEntityType: "OPERATOR", subjectUserId: null },
+    });
+    return { ...ticket, ticketNumber: ticketNumber(ticket.ticketSeq) };
+  },
+
+  async setSubjectUser(ticketId: string, subjectUserId: string) {
+    const ticket = await prisma.serviceTicket.update({
+      where: { id: ticketId },
+      data: { subjectUserId, subjectEntityType: "USER", operatorId: null },
+    });
+    return { ...ticket, ticketNumber: ticketNumber(ticket.ticketSeq) };
   },
 
   async updateStatus(id: string, status: TicketStatus) {

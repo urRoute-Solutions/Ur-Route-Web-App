@@ -128,6 +128,12 @@ export default function RegisterPage() {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
+        Running a fleet?{" "}
+        <Link href="/register/operator" className="font-semibold text-primary hover:underline">
+          Register as Operator
+        </Link>
+      </p>
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href="/login" className="font-semibold text-primary hover:underline">
           Sign in

@@ -66,7 +66,7 @@ export default async function OperatorDashboardPage() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Link href="/operator/trips/new">
-                <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10 hover:text-white">
+                <Button variant="outline" size="sm" className="gap-1.5 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
                   <Plus className="h-3.5 w-3.5" /> Add Trip
                 </Button>
               </Link>

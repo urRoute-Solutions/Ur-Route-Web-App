@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Building2, Phone, Mail, MapPin, Globe } from "lucide-react";
+import { Building2, Phone, Mail, MapPin, Globe, Copy } from "lucide-react";
 
 interface OperatorProfile {
   id: string;
   name: string;
   slug: string;
+  urid: string;
   description: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -148,6 +149,23 @@ export default function OperatorProfilePage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Slug</span>
               <span className="font-mono text-xs">{op.slug}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">URID</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-mono text-xs font-semibold tracking-wide">{op.urid}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(op.urid);
+                    toast.success("URID copied");
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Copy URID"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </span>
             </div>
             {op.rating != null && (
               <div className="flex items-center justify-between">

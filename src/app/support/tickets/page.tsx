@@ -1,10 +1,11 @@
 import { requireAuth } from "@/lib/auth/session";
 import { supportTicketRepository } from "@/repositories/support-ticket.repository";
+import { userRepository } from "@/repositories/user.repository";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronRight, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RaiseTicketDialog } from "./raise-ticket-dialog";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300",
@@ -31,21 +32,22 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export default async function MyTicketsPage() {
   const { userId } = await requireAuth();
-  const tickets = await supportTicketRepository.listByUser(userId);
+  const [tickets, user] = await Promise.all([
+    supportTicketRepository.listByUser(userId),
+    userRepository.findById(userId),
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-background">
       <div className="container max-w-3xl py-10">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-foreground">My Support Tickets</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Track the status of your support requests.
+              Track the status of your support requests, or raise a new one.
             </p>
           </div>
-          <Button variant="action" size="sm" asChild>
-            <Link href="/dashboard">Open support chat ↗</Link>
-          </Button>
+          <RaiseTicketDialog urid={user?.urid ?? null} />
         </div>
 
         {tickets.length === 0 ? (

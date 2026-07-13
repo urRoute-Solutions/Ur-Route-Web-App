@@ -3,6 +3,7 @@ import { operatorRepository } from "@/repositories/operator.repository";
 import { routeRepository } from "@/repositories/route.repository";
 import { toRouteDTO, type RouteDTO } from "@/dto/route.dto";
 import { auditService } from "@/services/audit.service";
+import { generateRouteTrips } from "@/usecases/routes/generate-route-trips";
 import type { CreateRouteInput } from "@/validators/route";
 import type { AuthPrincipal } from "@/types/auth";
 
@@ -28,6 +29,11 @@ export async function createRouteUseCase(
     destination: input.destination,
     distanceKm: input.distanceKm,
     durationMin: input.durationMin,
+    departureTime: input.departureTime,
+    arrivalTime: input.arrivalTime,
+    basePriceMinor: input.basePriceMinor,
+    availableFrom: input.availableFrom,
+    availableUntil: input.availableUntil,
     boardingPoints: input.boardingPoints,
     droppingPoints: input.droppingPoints,
   });
@@ -38,6 +44,17 @@ export async function createRouteUseCase(
     operatorId,
     entity: "Route",
     entityId: route.id,
+  });
+
+  await generateRouteTrips({
+    operatorId,
+    operatorName: operator.name,
+    routeId: route.id,
+    departureTime: input.departureTime,
+    arrivalTime: input.arrivalTime,
+    basePriceMinor: input.basePriceMinor,
+    availableFrom: input.availableFrom,
+    availableUntil: input.availableUntil,
   });
 
   return toRouteDTO(route);

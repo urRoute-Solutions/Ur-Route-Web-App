@@ -10,6 +10,10 @@ export const operatorRepository = {
     return prisma.operator.findUnique({ where: { slug, deletedAt: null } });
   },
 
+  findByUrid(urid: string): Promise<Operator | null> {
+    return prisma.operator.findUnique({ where: { urid, deletedAt: null } });
+  },
+
   findByOwnerId(ownerId: string): Promise<Operator | null> {
     return prisma.operator.findUnique({ where: { ownerId, deletedAt: null } });
   },

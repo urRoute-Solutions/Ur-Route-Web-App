@@ -46,6 +46,12 @@ export const tripRepository = {
         destination: { contains: params.destination, mode: "insensitive" },
         isActive:    true,
         deletedAt:   null,
+        // The route's availability window must cover the searched travel date
+        // (not "now") — an operator can publish a route for future dates.
+        AND: [
+          { OR: [{ availableFrom: null },  { availableFrom:  { lte: dayEnd } }] },
+          { OR: [{ availableUntil: null }, { availableUntil: { gte: dayStart } }] },
+        ],
       },
       departureAt:    { gte: dayStart, lte: dayEnd },
       availableSeats: { gte: params.minSeats },

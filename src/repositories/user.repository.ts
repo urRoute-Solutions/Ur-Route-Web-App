@@ -29,6 +29,10 @@ export const userRepository = {
     return prisma.user.findUnique({ where: { referralCode: code } });
   },
 
+  findByUrid(urid: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { urid } });
+  },
+
   create(data: Prisma.UserCreateInput): Promise<User> {
     return prisma.user.create({ data });
   },

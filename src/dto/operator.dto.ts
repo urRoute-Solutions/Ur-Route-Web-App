@@ -5,6 +5,7 @@ export interface OperatorDTO {
   ownerId: string;
   name: string;
   slug: string;
+  urid: string;
   description: string | null;
   logoUrl: string | null;
   contactEmail: string;
@@ -22,6 +23,7 @@ export function toOperatorDTO(op: Operator): OperatorDTO {
     ownerId: op.ownerId,
     name: op.name,
     slug: op.slug,
+    urid: op.urid,
     description: op.description,
     logoUrl: op.logoUrl,
     contactEmail: op.contactEmail,

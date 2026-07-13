@@ -6,7 +6,7 @@ import { auditService } from "@/services/audit.service";
 import { notificationService } from "@/services/notification.service";
 import { createVerificationToken } from "@/lib/auth/email-verification";
 import { toUserDTO, type UserDTO } from "@/dto/user.dto";
-import { generateReferralCode } from "@/utils/ids";
+import { generateReferralCode, generateUrid } from "@/utils/ids";
 import { logger } from "@/lib/logger";
 import type { RegisterInput } from "@/validators/auth";
 import type { AuthPrincipal } from "@/types/auth";
@@ -42,6 +42,7 @@ export async function registerUseCase(
 
   const passwordHash = await hashPassword(input.password);
   const referralCode = await uniqueReferralCode();
+  const urid = await uniqueUrid();
 
   const user = await userRepository.create({
     fullName: input.fullName,
@@ -49,6 +50,7 @@ export async function registerUseCase(
     phone: input.phone,
     passwordHash,
     referralCode,
+    urid,
     role: "TRAVELER",
     ...(referredById ? { referredBy: { connect: { id: referredById } } } : {}),
   });
@@ -175,4 +177,13 @@ async function uniqueReferralCode(): Promise<string> {
   }
   // Fall back to a longer code — collision probability becomes negligible.
   return generateReferralCode(10);
+}
+
+/** Retry URID generation on the (rare) unique collision. */
+async function uniqueUrid(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const urid = generateUrid("USR");
+    if (!(await userRepository.findByUrid(urid))) return urid;
+  }
+  return generateUrid("USR", 9);
 }

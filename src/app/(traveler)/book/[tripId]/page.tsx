@@ -654,17 +654,21 @@ export default function BookTripPage() {
   }, [tripId, step]);
 
   function toggleSeat(label: string) {
-    setSelectedSeats((prev) => {
-      if (prev.includes(label)) {
-        const next = prev.filter((s) => s !== label);
-        setPassengers((ps) => ps.slice(0, next.length));
-        return next;
-      }
-      const next = [...prev, label];
-      setPassengers((ps) => [...ps, { name: "", age: "", gender: "", seatLabel: label, phone: "" }]);
-      return next;
-    });
+    setSelectedSeats((prev) =>
+      prev.includes(label) ? prev.filter((s) => s !== label) : [...prev, label],
+    );
   }
+
+  // Keep passengers in sync with selectedSeats, preserving already-entered
+  // details for seats that remain selected (matched by seat label).
+  useEffect(() => {
+    setPassengers((prev) =>
+      selectedSeats.map(
+        (label) =>
+          prev.find((p) => p.seatLabel === label) ?? { name: "", age: "", gender: "", seatLabel: label, phone: "" },
+      ),
+    );
+  }, [selectedSeats]);
 
   function updatePassenger(idx: number, field: keyof Passenger, value: string) {
     setPassengers((ps) => ps.map((p, i) => i === idx ? { ...p, [field]: value } : p));

@@ -1,6 +1,7 @@
 /** Small ID/code generators that don't warrant a dependency. */
 
 const REFERRAL_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+const LETTERS_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // same exclusions, letters only
 
 /** Human-friendly referral code, e.g. "P101S". */
 export function generateReferralCode(length = 6): string {
@@ -15,6 +16,16 @@ export function generateReferralCode(length = 6): string {
 /** A PNR for bookings, e.g. "UR8F3K2Q". */
 export function generatePnr(): string {
   return "UR" + generateReferralCode(8);
+}
+
+/** Prefixed UrRoute ID for support/incident lookup, e.g. "OPR-STBKNTY". */
+export function generateUrid(prefix: "OPR" | "USR" | "SUP", length = 7): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += LETTERS_ALPHABET[bytes[i]! % LETTERS_ALPHABET.length];
+  }
+  return `${prefix}-${code}`;
 }
 
 /** RFC4122-ish unique id for token jti / family ids. */

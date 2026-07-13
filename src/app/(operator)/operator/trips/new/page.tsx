@@ -16,15 +16,19 @@ interface RouteOption { id: string; origin: string; destination: string }
 export default function NewTripPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [operatorId, setOperatorId] = useState<string | null>(null);
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [form, setForm] = useState({
-    routeId: "", departureAt: "", arrivalAt: "", totalSeats: "40", priceMinor: "",
+    routeId: "", busName: "", departureAt: "", arrivalAt: "", totalSeats: "40", priceMinor: "",
   });
 
   useEffect(() => {
     fetch("/api/routes?pageSize=100")
       .then((r) => r.json())
       .then((j) => setRoutes(j.data?.items ?? []));
+    fetch("/api/operators/me")
+      .then((r) => r.json())
+      .then((j) => setOperatorId(j.data?.operator?.id ?? null));
   }, []);
 
   function set(field: string, value: string) {
@@ -33,16 +37,26 @@ export default function NewTripPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!operatorId) return;
     setSaving(true);
-    const res = await fetch("/api/trips", {
+    const totalSeats = parseInt(form.totalSeats, 10);
+    const basePriceMinor = Math.round(parseFloat(form.priceMinor) * 100);
+    const seats = Array.from({ length: totalSeats }, (_, i) => ({
+      label: `L${i + 1}`,
+      deck: "LOWER" as const,
+      priceMinor: basePriceMinor,
+      isLadies: false,
+    }));
+    const res = await fetch(`/api/operators/${operatorId}/trips`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         routeId: form.routeId,
+        busName: form.busName,
+        basePriceMinor,
         departureAt: new Date(form.departureAt).toISOString(),
         arrivalAt: new Date(form.arrivalAt).toISOString(),
-        totalSeats: parseInt(form.totalSeats),
-        basePriceMinor: Math.round(parseFloat(form.priceMinor) * 100),
+        seats,
       }),
     });
     const json = await res.json();
@@ -82,6 +96,10 @@ export default function NewTripPage() {
                 <p className="text-xs text-muted-foreground">No routes found. <Link href="/operator/routes/new" className="text-primary hover:underline">Create one first</Link>.</p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <Label>Bus name</Label>
+              <Input value={form.busName} onChange={(e) => set("busName", e.target.value)} placeholder="e.g. KPN Express" required />
+            </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Departure</Label>
@@ -103,7 +121,7 @@ export default function NewTripPage() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={saving || !form.routeId}>{saving ? "Scheduling…" : "Schedule trip"}</Button>
+              <Button type="submit" disabled={saving || !form.routeId || !operatorId}>{saving ? "Scheduling…" : "Schedule trip"}</Button>
               <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             </div>
           </form>

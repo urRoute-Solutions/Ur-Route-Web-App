@@ -142,6 +142,11 @@ enum TicketPriority {
   URGENT
 }
 
+enum TicketSubjectType {
+  OPERATOR
+  USER
+}
+
 enum NotificationStatus {
   PENDING
   SENT
@@ -170,6 +175,7 @@ model User {
   role          Role      @default(TRAVELER)
   avatarUrl     String?
   referralCode  String    @unique
+  urid          String?   @unique // USR- for travelers, SUP- for agent/admin
   referredById  String?
   referredBy    User?     @relation("Referral", fields: [referredById], references: [id])
   referrals     User[]    @relation("Referral")
@@ -214,6 +220,7 @@ model Operator {
   owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name         String
   slug         String         @unique
+  urid         String         @unique // 7-letter UrRoute ID, for support/incident lookup
   description  String?
   logoUrl      String?
   contactEmail String
@@ -253,6 +260,11 @@ model Route {
   destination    String
   distanceKm     Int?
   durationMin    Int?
+  departureTime  String? // "HH:mm", 24h clock
+  arrivalTime    String? // "HH:mm", 24h clock
+  basePriceMinor Int? // default fare per seat, paise
+  availableFrom  DateTime?
+  availableUntil DateTime?
   boardingPoints Json      @default("[]") // [{name, landmark, time}]
   droppingPoints Json      @default("[]")
   isActive       Boolean   @default(true)
@@ -653,6 +665,7 @@ model Session {
 
 model AuditLog {
   id         String   @id @default(cuid())
+  auditSeq   Int      @default(autoincrement())
   actorId    String?
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
   operatorId String? // tenant context, when applicable
@@ -680,6 +693,8 @@ model ServiceTicket {
   userId      String
   user        User           @relation(fields: [userId], references: [id])
   operatorId  String?
+  subjectEntityType TicketSubjectType?
+  subjectUserId     String? // the User this ticket is ABOUT (distinct from `userId`, the raiser)
   bookingRef  String?
   category    TicketCategory
   subCategory String?

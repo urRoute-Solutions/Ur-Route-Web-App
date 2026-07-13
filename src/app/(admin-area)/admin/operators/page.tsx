@@ -3,6 +3,7 @@ import { operatorRepository } from "@/repositories/operator.repository";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2 } from "lucide-react";
+import { ActivateOperatorButton } from "./activate-operator-button";
 
 export default async function AdminOperatorsPage() {
   await requireRole("ADMIN");
@@ -34,13 +35,16 @@ export default async function AdminOperatorsPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-sm">{o.name}</p>
-                  <p className="text-xs text-muted-foreground">{o.slug} · {o.city ?? "—"} · {o.contactEmail}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.slug} · {o.city ?? "—"} · {o.contactEmail} · <span className="font-mono">{o.urid}</span>
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Badge variant={o.status === "ACTIVE" ? "default" : o.status === "PENDING" ? "secondary" : "destructive"}>
                   {o.status}
                 </Badge>
+                {o.status === "PENDING" && <ActivateOperatorButton operatorId={o.id} />}
                 <p className="text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
               </div>
             </CardContent>

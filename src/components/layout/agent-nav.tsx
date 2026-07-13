@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  Headphones, LayoutDashboard, Ticket,
+  Headphones, LayoutDashboard, Ticket, Building2,
   Power, PowerOff, Menu, LogOut,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -13,8 +13,9 @@ import { useRouter } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV_ITEMS = [
-  { href: "/agent/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/agent/tickets",   label: "My Queue",  icon: Ticket },
+  { href: "/agent/dashboard", label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/agent/tickets",   label: "My Queue",   icon: Ticket },
+  { href: "/agent/operators", label: "Operators",  icon: Building2 },
 ];
 
 interface AgentNavProps {
