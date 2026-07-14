@@ -159,7 +159,7 @@ export default function NewRoutePage() {
   };
 
   return (
-    <div className="p-6 max-w-lg space-y-6">
+    <div className="mx-auto w-full max-w-lg px-4 sm:px-6 py-6 space-y-6">
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />

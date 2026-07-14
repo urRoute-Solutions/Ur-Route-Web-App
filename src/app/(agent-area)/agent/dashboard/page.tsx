@@ -39,13 +39,13 @@ export default async function AgentDashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-black text-white">Agent Dashboard</h1>
         <p className="mt-1 text-sm text-slate-400">Your support queue overview.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {stats.map((s) => (
           <div key={s.label} className={cn("rounded-xl border p-5", s.bg)}>
             <s.icon className={cn("h-5 w-5 mb-3", s.color)} />

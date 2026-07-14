@@ -81,7 +81,7 @@ export default function OperatorProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-lg space-y-4">
+      <div className="mx-auto w-full max-w-lg px-4 sm:px-6 py-6 space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
@@ -89,7 +89,7 @@ export default function OperatorProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-lg space-y-6">
+    <div className="mx-auto w-full max-w-lg px-4 sm:px-6 py-6 space-y-6">
       <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>

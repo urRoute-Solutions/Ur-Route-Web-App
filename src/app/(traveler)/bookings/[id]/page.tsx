@@ -39,7 +39,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const discountTotal = booking.discountMinor + booking.groupBonusMinor;
 
   return (
-    <div className="p-6 max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-6 space-y-6">
       <BackButton fallback="/bookings" label="My Bookings" variant="ghost" />
       {/* Status banner */}
       <div className={`flex items-center gap-3 rounded-xl p-4 ${

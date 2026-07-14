@@ -25,7 +25,7 @@ export default async function OperatorTripsPage() {
   const routeMap = Object.fromEntries(routes.map((r) => [r.id, r]));
 
   return (
-    <div className="p-6 max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Trips</h1>
         <Link href="/operator/trips/new">
@@ -51,7 +51,7 @@ export default async function OperatorTripsPage() {
           const arr = new Date(t.arrivalAt);
           return (
             <Card key={t.id}>
-              <CardContent className="flex items-center justify-between gap-4 py-4 px-5">
+              <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 px-5">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <Bus className="h-4 w-4 text-primary" />
@@ -68,8 +68,8 @@ export default async function OperatorTripsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="text-right mr-1">
                     <p className="text-xs text-muted-foreground">{t.availableSeats} seats left</p>
                     <p className="text-sm font-semibold">₹{(t.basePriceMinor / 100).toFixed(0)}</p>
                   </div>

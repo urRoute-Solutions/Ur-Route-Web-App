@@ -11,7 +11,7 @@ export default async function OperatorRoutesPage() {
   const [routes, total] = await routeRepository.listByOperator(operatorId, { page: 1, pageSize: 50 });
 
   return (
-    <div className="p-6 max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Routes</h1>
         <Link href="/operator/routes/new">

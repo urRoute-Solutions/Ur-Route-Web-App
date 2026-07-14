@@ -95,7 +95,7 @@ export default function NewOfferPage() {
   }
 
   return (
-    <div className="p-6 max-w-xl space-y-6">
+    <div className="mx-auto w-full max-w-xl px-4 sm:px-6 py-6 space-y-6">
       {/* Back nav */}
       <div className="flex items-center gap-3">
         <button

@@ -12,7 +12,7 @@ const createSchema = z.object({
   subCategory: z.string().min(1).max(120).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
   subject: z.string().min(3).max(200),
-  description: z.string().min(10).max(2000),
+  description: z.string().min(3).max(2000),
   bookingRef: z.string().max(50).optional(),
   operatorId: z.string().optional(),
 });

@@ -72,7 +72,7 @@ export default async function OperatorOffersPage() {
   const configured = offers.length;
 
   return (
-    <div className="p-6 max-w-4xl space-y-8">
+    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>

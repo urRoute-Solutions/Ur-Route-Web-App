@@ -59,7 +59,7 @@ export default async function AnalyticsPage() {
   ];
 
   return (
-    <div className="p-6 max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 space-y-6">
       <Link href="/operator/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>

@@ -71,7 +71,7 @@ export function EditOfferForm({ templateId, operatorId, initial }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-xl space-y-6">
+    <div className="mx-auto w-full max-w-xl px-4 sm:px-6 py-6 space-y-6">
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()} className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">
           <ArrowLeft className="h-4 w-4" />

@@ -742,7 +742,7 @@ export default function BookTripPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-2xl space-y-4">
+      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-6 space-y-4">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-2 w-full" />
         <Skeleton className="h-56 w-full rounded-2xl" />
@@ -755,7 +755,7 @@ export default function BookTripPage() {
   const stepLabels = ["Your Deal", "Choose Seats", "Passenger Details"];
 
   return (
-    <div className="p-6 max-w-2xl">
+    <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-6">
       {/* Back to search */}
       <button
         onClick={() => {

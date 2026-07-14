@@ -53,7 +53,7 @@ export default async function OperatorDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* ── Greeting banner ── */}
       <div className="bg-sidebar text-white">
-        <div className="px-6 py-8 max-w-5xl">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p className="text-white/60 text-sm mb-1">{greetingPart()}</p>
@@ -80,7 +80,7 @@ export default async function OperatorDashboardPage() {
         </div>
       </div>
 
-      <div className="px-6 py-8 max-w-5xl space-y-8">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {STATS.map(({ icon: Icon, label, value, color, bg, href }) => (

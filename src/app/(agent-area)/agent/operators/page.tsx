@@ -52,7 +52,7 @@ export default function AgentOperatorLookupPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-6 space-y-6">
       <Link href="/agent/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>

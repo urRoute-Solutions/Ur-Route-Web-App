@@ -41,7 +41,7 @@ export default async function AdminSupportPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 space-y-6">
       <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>

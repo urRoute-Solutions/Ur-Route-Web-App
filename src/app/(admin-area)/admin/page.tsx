@@ -50,7 +50,7 @@ export default async function AdminOverviewPage() {
     <div className="min-h-screen bg-background">
       {/* ── Header banner ── */}
       <div className="bg-sidebar text-white">
-        <div className="px-6 py-8 max-w-5xl">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -78,7 +78,7 @@ export default async function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="px-6 py-8 max-w-5xl space-y-8">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {STATS.map(({ icon: Icon, label, value, sub, color, bg, href }) => (

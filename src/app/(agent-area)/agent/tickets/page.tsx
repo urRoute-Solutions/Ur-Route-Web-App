@@ -107,7 +107,7 @@ export default function AgentTicketsPage() {
   );
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-6">
       {/* My Queue */}
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">

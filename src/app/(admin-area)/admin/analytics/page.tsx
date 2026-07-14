@@ -24,7 +24,7 @@ export default async function AdminAnalyticsPage() {
   const totalBookings = bookingStats.reduce((s: number, b) => s + b._count.id, 0);
 
   return (
-    <div className="p-6 max-w-4xl space-y-8">
+    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-8">
       <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>

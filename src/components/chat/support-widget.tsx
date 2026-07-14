@@ -247,22 +247,35 @@ export function SupportWidget() {
           );
           return;
         }
-        throw new Error("Failed");
+        let errMsg = "Something went wrong. Please try again.";
+        try {
+          const errJson = await res.json();
+          if (errJson?.error?.message) errMsg = errJson.error.message;
+          else if (errJson?.error?.details?.formErrors?.[0]) errMsg = errJson.error.details.formErrors[0];
+        } catch { /* ignore */ }
+        setPhase({ name: "home" });
+        pushBot(errMsg);
+        return;
       }
 
       const json = await res.json();
       const ticket = json.data?.ticket;
-      if (!ticket) throw new Error("Invalid response");
+      if (!ticket) {
+        setPhase({ name: "home" });
+        pushBot("Ticket was created but we couldn't confirm the reference. Check My Tickets.");
+        return;
+      }
 
       setPhase({ name: "success", ticketNumber: ticket.ticketNumber });
       setMessages((prev) => prev.filter((m) => m.from !== "typing").concat({
         from: "bot",
-        text: `Your ticket ${ticket.ticketNumber} has been created. Our team will respond within 24 hours.`,
+        text: `Your ticket ${ticket.ticketNumber} has been raised. Our team will respond within 24 hours.`,
         options: [{ label: "View my tickets", id: "view" }],
       }));
-    } catch {
+    } catch (err) {
       setPhase({ name: "home" });
-      pushBot("Something went wrong. Please try again or email support@urroute.in");
+      pushBot("Connection error. Please check your internet and try again.");
+      console.error("[SupportWidget] submitTicket error:", err);
     }
   }
 
