@@ -299,7 +299,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
                         {b.status}
                       </span>
                       <Link
-                        href={`/admin/bookings/${b.id}`}
+                        href={`/agent/bookings/${b.id}`}
                         target="_blank"
                         className="shrink-0 text-slate-500 hover:text-blue-400 transition-colors"
                         title="View booking detail"

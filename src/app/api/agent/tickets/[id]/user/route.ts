@@ -25,7 +25,7 @@ export async function GET(
     const user = await userRepository.findById(ticket.subjectUserId);
     if (!user) return ok({ user: null });
 
-    const [bookings] = await bookingRepository.listByUser(user.id, { page: 1, pageSize: 5 });
+    const [bookings] = await bookingRepository.listByUser(user.id, { page: 1, pageSize: 20 });
 
     return ok({
       user: toUserDTO(user),
