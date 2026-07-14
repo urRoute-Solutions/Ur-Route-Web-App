@@ -28,7 +28,12 @@ export async function GET(
     const [bookings] = await bookingRepository.listByUser(user.id, { page: 1, pageSize: 20 });
 
     return ok({
-      user: toUserDTO(user),
+      user: {
+        ...toUserDTO(user),
+        walletBalanceMinor: user.walletBalanceMinor,
+        isActive: user.isActive,
+        lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      },
       recentBookings: bookings.map((b) => ({
         id: b.id,
         pnr: b.pnr,

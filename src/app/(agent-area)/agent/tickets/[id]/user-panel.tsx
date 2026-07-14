@@ -26,6 +26,10 @@ interface UserSummary {
   phone: string | null;
   role: string;
   createdAt: string;
+  walletBalanceMinor: number;
+  isActive: boolean;
+  emailVerified: boolean;
+  lastLoginAt: string | null;
 }
 
 interface BookingSummary {
@@ -38,6 +42,8 @@ interface BookingSummary {
 interface AgentIdentity { fullName: string; urid: string | null }
 
 const BASIC_DETAIL_FIELDS = [
+  { key: "fullName", label: "Name" },
+  { key: "urid", label: "URID" },
   { key: "email", label: "Email" },
   { key: "phone", label: "Phone" },
 ] as const;
@@ -64,8 +70,22 @@ const STATUS_COLORS: Record<string, string> = {
   COMPLETED: "text-slate-400",
 };
 
+const VERIFY_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+
 function verifiedKey(ticketId: string) {
   return `agent:verified:${ticketId}`;
+}
+function isVerified(ticketId: string): boolean {
+  if (typeof window === "undefined") return false;
+  const raw = localStorage.getItem(verifiedKey(ticketId));
+  if (!raw) return false;
+  return Date.now() - parseInt(raw, 10) < VERIFY_TTL_MS;
+}
+function markVerified(ticketId: string) {
+  localStorage.setItem(verifiedKey(ticketId), Date.now().toString());
+}
+function clearVerified(ticketId: string) {
+  localStorage.removeItem(verifiedKey(ticketId));
 }
 
 export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticketNumber: string | null }) {
@@ -74,13 +94,8 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
   const [showAllBookings, setShowAllBookings] = useState(false);
   const [agent, setAgent] = useState<AgentIdentity | null>(null);
 
-  // Persist verification within the browser session so re-mounting doesn't re-ask
-  const [step, setStep] = useState<Step>(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem(verifiedKey(ticketId)) === "1" ? "unlocked" : "verify";
-    }
-    return "verify";
-  });
+  // Persist verification for 8 hours in localStorage so re-mounting/new tabs don't re-ask
+  const [step, setStep] = useState<Step>(() => isVerified(ticketId) ? "unlocked" : "verify");
   const [verifyUrid, setVerifyUrid] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifyFailed, setVerifyFailed] = useState(false);
@@ -127,7 +142,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
     const json = await res.json();
     setVerifying(false);
     if (res.ok && json.data?.verified) {
-      sessionStorage.setItem(verifiedKey(ticketId), "1");
+      markVerified(ticketId);
       setStep("unlocked");
     } else {
       setVerifyFailed(true);
@@ -177,7 +192,7 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
     setSaving(false);
     if (res.ok) {
       setResult({ auditReference: json.data.auditReference, ticketNumber: json.data.ticketNumber });
-      sessionStorage.removeItem(verifiedKey(ticketId));
+      clearVerified(ticketId);
       setStep("resolved");
       load();
     } else {
@@ -248,13 +263,20 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
               Verified User <strong>{subjectUser.fullName}</strong>
               <span className="ml-2 font-mono text-xs text-slate-400">{subjectUser.urid}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button onClick={() => setStep("view")} className="flex items-center gap-1 rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors">
-                <Eye className="h-3 w-3" /> View Profile
+                <Eye className="h-3 w-3" /> Quick View
               </button>
               <button onClick={startEdit} className="flex items-center gap-1 rounded-md bg-purple-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-colors">
                 <Pencil className="h-3 w-3" /> Edit Profile
               </button>
+              <Link
+                href={`/agent/users/${subjectUser.id}`}
+                target="_blank"
+                className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" /> Full Profile
+              </Link>
             </div>
           </motion.div>
         )}
@@ -262,14 +284,22 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
         {step === "view" && (
           <motion.div key="view" {...fade} className="space-y-3">
             <div>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Basic details</p>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Account details</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 {BASIC_DETAIL_FIELDS.map(({ key, label }) => (
                   <div key={key}>
                     <p className="text-slate-500">{label}</p>
-                    <p className="text-slate-200">{(subjectUser[key as keyof UserSummary] as string) || "—"}</p>
+                    <p className="text-slate-200 font-mono text-[11px] break-all">{(subjectUser[key as keyof UserSummary] as string) || "—"}</p>
                   </div>
                 ))}
+                <div>
+                  <p className="text-slate-500">Wallet</p>
+                  <p className="text-green-400 font-semibold">₹{(subjectUser.walletBalanceMinor / 100).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Member since</p>
+                  <p className="text-slate-200">{new Date(subjectUser.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                </div>
               </div>
             </div>
 
@@ -320,10 +350,17 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button onClick={startEdit} className="flex items-center gap-1 rounded-md bg-purple-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-colors">
                 <Pencil className="h-3 w-3" /> Edit Profile
               </button>
+              <Link
+                href={`/agent/users/${subjectUser.id}`}
+                target="_blank"
+                className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" /> Full Profile
+              </Link>
               <button onClick={() => setStep("unlocked")} className="rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors">
                 Back
               </button>
