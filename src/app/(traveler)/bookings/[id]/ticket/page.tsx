@@ -190,7 +190,7 @@ export default async function TicketPage({
               <span>Base fare</span><span>₹{(ticket.baseFareMinor / 100).toFixed(2)}</span>
             </div>
             {discountTotal > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-green-600 dark:text-green-400">
                 <span>Loyalty discount{ticket.appliedLevel ? ` (${ticket.appliedLevel.replace("LEVEL_", "L")})` : ""}</span>
                 <span>− ₹{(discountTotal / 100).toFixed(2)}</span>
               </div>

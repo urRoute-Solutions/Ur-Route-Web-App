@@ -164,11 +164,11 @@ export default function TripManifestPage() {
           <div className="flex items-center gap-4 pt-1 border-t border-border text-sm">
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="font-bold text-green-600">{totalBoarded}</span>
+              <span className="font-bold text-green-600 dark:text-green-400">{totalBoarded}</span>
               <span className="text-muted-foreground">/ {data.totalPassengers} boarded</span>
             </div>
             {totalBoarded === data.totalPassengers && data.totalPassengers > 0 && (
-              <span className="text-green-600 font-semibold text-xs">All aboard!</span>
+              <span className="text-green-600 dark:text-green-400 font-semibold text-xs">All aboard!</span>
             )}
           </div>
 
@@ -226,7 +226,7 @@ export default function TripManifestPage() {
                           title={isBoarded ? "Mark as not boarded" : "Mark as boarded"}
                         >
                           {isBoarded
-                            ? <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            ? <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                             : <Circle className="h-5 w-5 text-muted-foreground/40 hover:text-muted-foreground" />
                           }
                         </button>

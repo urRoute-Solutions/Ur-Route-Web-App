@@ -8,10 +8,10 @@ import { Gift, Star, Lock, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 const LEVEL_META = {
-  LEVEL_1: { label: "Welcome", color: "bg-slate-400", textColor: "text-slate-600", max: 4 },
-  LEVEL_2: { label: "Stay", color: "bg-blue-500", textColor: "text-blue-600", max: 8 },
-  LEVEL_3: { label: "Loyalty", color: "bg-purple-500", textColor: "text-purple-600", max: 12 },
-  LEVEL_4: { label: "Champion", color: "bg-amber-500", textColor: "text-amber-600", max: 12 },
+  LEVEL_1: { label: "Welcome", color: "bg-slate-400", textColor: "text-slate-500 dark:text-slate-400", max: 4 },
+  LEVEL_2: { label: "Stay", color: "bg-blue-500", textColor: "text-blue-600 dark:text-blue-400", max: 8 },
+  LEVEL_3: { label: "Loyalty", color: "bg-purple-500", textColor: "text-purple-600 dark:text-purple-400", max: 12 },
+  LEVEL_4: { label: "Champion", color: "bg-amber-500", textColor: "text-amber-600 dark:text-amber-400", max: 12 },
 } as const;
 
 const LEVEL_ORDER: Array<keyof typeof LEVEL_META> = ["LEVEL_1", "LEVEL_2", "LEVEL_3", "LEVEL_4"];
@@ -97,7 +97,7 @@ export default async function RewardsPage() {
 
               <div className="text-xs text-muted-foreground">
                 {prog.status === "FROZEN" && prog.frozenAt && (
-                  <p className="text-amber-600">Progress frozen on {new Date(prog.frozenAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}. Book with this operator to resume.</p>
+                  <p className="text-amber-600 dark:text-amber-400">Progress frozen on {new Date(prog.frozenAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}. Book with this operator to resume.</p>
                 )}
                 {prog.status === "ACTIVE" && (
                   <p>Keep booking with this operator to level up and earn discounts.</p>

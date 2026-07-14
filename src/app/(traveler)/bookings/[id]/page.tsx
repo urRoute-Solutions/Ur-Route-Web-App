@@ -65,7 +65,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">Base fare</span><span>₹{(booking.baseFareMinor / 100).toFixed(2)}</span></div>
           {discountTotal > 0 && (
-            <div className="flex justify-between text-green-600"><span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Loyalty discount</span><span>− ₹{(discountTotal / 100).toFixed(2)}</span></div>
+            <div className="flex justify-between text-green-600 dark:text-green-400"><span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Loyalty discount</span><span>− ₹{(discountTotal / 100).toFixed(2)}</span></div>
           )}
           <div className="flex justify-between"><span className="text-muted-foreground">Tax (GST)</span><span>₹{(booking.taxMinor / 100).toFixed(2)}</span></div>
           <Separator />

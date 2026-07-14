@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   User, Mail, Phone, Wallet, Calendar, Shield, CheckCircle,
-  XCircle, Clock, Ticket, ArrowRight, ExternalLink, Hash,
+  XCircle, Clock, Ticket, ArrowRight, ChevronRight, Hash,
 } from "lucide-react";
 
 const STATUS_VARIANT: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
@@ -134,7 +134,7 @@ export default async function AgentUserProfilePage({ params }: { params: Promise
                 <Wallet className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-[10px] uppercase font-semibold text-muted-foreground">Wallet Balance</p>
-                  <p className="font-bold text-green-600">
+                  <p className="font-bold text-green-600 dark:text-green-400">
                     ₹{(user.walletBalanceMinor / 100).toFixed(2)}
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default async function AgentUserProfilePage({ params }: { params: Promise
                           className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
                           title="View booking detail"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                       </div>
                     );

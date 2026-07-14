@@ -132,7 +132,7 @@ export default async function DashboardPage() {
                     href={`/search?origin=${encodeURIComponent(r.origin)}&destination=${encodeURIComponent(r.destination)}&date=${today}`}
                     className="bg-white dark:bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/30 hover:bg-muted/20 transition-all group"
                   >
-                    <div className="shrink-0 w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
                       <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
                     </div>
                     <div className="min-w-0">

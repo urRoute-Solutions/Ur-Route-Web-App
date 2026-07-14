@@ -113,7 +113,7 @@ export default async function AgentBookingDetailPage({ params }: { params: Promi
               </span>
             </div>
             {booking.appliedLevel && (
-              <div className="flex items-center gap-2 text-amber-600">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                 <Tag className="h-4 w-4 shrink-0" />
                 <span className="font-medium">
                   Loyalty level {booking.appliedLevel.replace("LEVEL_", "L")} applied
@@ -137,7 +137,7 @@ export default async function AgentBookingDetailPage({ params }: { params: Promi
             <span>₹{(booking.baseFareMinor / 100).toFixed(2)}</span>
           </div>
           {discountTotal > 0 && (
-            <div className="flex justify-between text-green-600">
+            <div className="flex justify-between text-green-600 dark:text-green-400">
               <span className="flex items-center gap-1">
                 <Tag className="h-3.5 w-3.5" /> Discount
               </span>

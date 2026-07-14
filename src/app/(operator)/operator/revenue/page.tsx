@@ -67,7 +67,7 @@ export default async function RevenuePage() {
       value: fmt(allTime._sum.totalFareMinor ?? 0),
       sub: `${allTime._count.id} paid bookings`,
       icon: IndianRupee,
-      color: "text-green-600",
+      color: "text-green-600 dark:text-green-400",
       bg: "bg-green-50 dark:bg-green-950/30",
     },
     {
@@ -83,7 +83,7 @@ export default async function RevenuePage() {
       value: fmt(thisWeek._sum.totalFareMinor ?? 0),
       sub: "rolling week",
       icon: BookOpen,
-      color: "text-amber-600",
+      color: "text-amber-600 dark:text-amber-400",
       bg: "bg-amber-50 dark:bg-amber-950/30",
     },
     {
@@ -91,7 +91,7 @@ export default async function RevenuePage() {
       value: uniqueTravelers.length.toString(),
       sub: "paid at least once",
       icon: Users,
-      color: "text-blue-600",
+      color: "text-blue-600 dark:text-blue-400",
       bg: "bg-blue-50 dark:bg-blue-950/30",
     },
   ];

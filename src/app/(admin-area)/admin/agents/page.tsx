@@ -42,8 +42,8 @@ export default async function AdminAgentsPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Total agents</p>
         </div>
         <div className="rounded-xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 p-4 text-center">
-          <p className="text-2xl font-black text-green-600">{onlineIds.length}</p>
-          <p className="text-xs text-green-600/70 mt-0.5">Online now</p>
+          <p className="text-2xl font-black text-green-600 dark:text-green-400">{onlineIds.length}</p>
+          <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-0.5">Online now</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-foreground">
@@ -88,7 +88,7 @@ export default async function AdminAgentsPage() {
                     <td className="px-4 py-3">
                       <span className={cn(
                         "flex items-center gap-1.5 text-xs font-semibold",
-                        isOnline ? "text-green-600" : "text-muted-foreground"
+                        isOnline ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                       )}>
                         <span className={cn("h-2 w-2 rounded-full", isOnline ? "bg-green-500 animate-pulse" : "bg-slate-400")} />
                         {isOnline ? "Online" : "Offline"}

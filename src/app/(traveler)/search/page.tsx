@@ -220,7 +220,7 @@ function WaitlistButton({ tripId }: { tripId: string }) {
   }
 
   if (joined) return (
-    <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-600">
+    <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
       <Clock className="h-4 w-4" /> On waitlist
     </div>
   );
@@ -305,7 +305,7 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
           <div className="flex items-center justify-between mb-1.5">
             <span className={cn(
               "text-[11px] font-bold",
-              seatsUrgent ? "text-red-600" : seatsLeft <= 15 ? "text-amber-600" : "text-emerald-600"
+              seatsUrgent ? "text-red-600 dark:text-red-400" : seatsLeft <= 15 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
             )}>
               {seatsUrgent ? `Only ${seatsLeft} seat${seatsLeft !== 1 ? "s" : ""} left!` : `${seatsLeft} / ${seatsTotal} seats available`}
             </span>

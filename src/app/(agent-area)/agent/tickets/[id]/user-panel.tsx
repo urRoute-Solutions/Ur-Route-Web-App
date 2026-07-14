@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Ticket,
   ExternalLink,
+  ChevronRight,
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -272,10 +273,9 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
               </button>
               <Link
                 href={`/agent/users/${subjectUser.id}`}
-                target="_blank"
                 className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
               >
-                <ExternalLink className="h-3 w-3" /> Full Profile
+                <UserIcon className="h-3 w-3" /> Full Profile
               </Link>
             </div>
           </motion.div>
@@ -330,11 +330,10 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
                       </span>
                       <Link
                         href={`/agent/bookings/${b.id}`}
-                        target="_blank"
                         className="shrink-0 text-slate-500 hover:text-blue-400 transition-colors"
                         title="View booking detail"
                       >
-                        <ExternalLink className="h-3 w-3" />
+                        <ChevronRight className="h-3 w-3" />
                       </Link>
                     </div>
                   ))}
@@ -356,10 +355,9 @@ export function UserPanel({ ticketId, ticketNumber }: { ticketId: string; ticket
               </button>
               <Link
                 href={`/agent/users/${subjectUser.id}`}
-                target="_blank"
                 className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
               >
-                <ExternalLink className="h-3 w-3" /> Full Profile
+                <UserIcon className="h-3 w-3" /> Full Profile
               </Link>
               <button onClick={() => setStep("unlocked")} className="rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors">
                 Back
