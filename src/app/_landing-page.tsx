@@ -461,6 +461,7 @@ export function LandingPage() {
                   <input
                     type="date"
                     value={date}
+                    min={new Date().toISOString().slice(0, 10)}
                     onChange={(e) => setDate(e.target.value)}
                     className="w-full bg-transparent text-sm font-semibold text-foreground outline-none"
                   />

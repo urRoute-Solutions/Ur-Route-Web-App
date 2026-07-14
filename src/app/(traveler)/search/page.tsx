@@ -609,6 +609,7 @@ export default function SearchPage() {
             <Input
               type="date"
               value={date}
+              min={new Date().toISOString().slice(0, 10)}
               onChange={(e) => setDate(e.target.value)}
               className="h-10 text-sm w-auto"
               required

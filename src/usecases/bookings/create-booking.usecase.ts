@@ -25,6 +25,13 @@ export async function createBookingUseCase(
     throw new AppError("This trip is no longer bookable", 409, "TRIP_NOT_BOOKABLE");
   }
 
+  // Trips stay "SCHEDULED" until an operator manually marks them departed —
+  // search already excludes departed trips, but a stale search-result page
+  // or a direct API call by tripId must not be able to book one anyway.
+  if (trip.departureAt.getTime() <= Date.now()) {
+    throw new AppError("This trip has already departed", 409, "TRIP_ALREADY_DEPARTED");
+  }
+
   // Validate requested seats belong to this trip and are available.
   const requestedSeats = trip.seats.filter((s) => input.seatIds.includes(s.id));
   if (requestedSeats.length !== input.seatIds.length) {

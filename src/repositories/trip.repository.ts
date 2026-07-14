@@ -39,6 +39,11 @@ export const tripRepository = {
     // stored in any timezone offset.
     const dayStart = new Date(`${params.date}T00:00:00`);
     const dayEnd   = new Date(`${params.date}T23:59:59.999`);
+    // For a same-day search, don't surface trips that have already departed
+    // today — a future date's dayStart is already later than now, so this
+    // only narrows the window when the searched date is today (or earlier).
+    const now = new Date();
+    const departureLowerBound = dayStart > now ? dayStart : now;
 
     const where: Prisma.TripWhereInput = {
       route: {
@@ -53,7 +58,7 @@ export const tripRepository = {
           { OR: [{ availableUntil: null }, { availableUntil: { gte: dayStart } }] },
         ],
       },
-      departureAt:    { gte: dayStart, lte: dayEnd },
+      departureAt:    { gte: departureLowerBound, lte: dayEnd },
       availableSeats: { gte: params.minSeats },
       status:         "SCHEDULED",
     };
