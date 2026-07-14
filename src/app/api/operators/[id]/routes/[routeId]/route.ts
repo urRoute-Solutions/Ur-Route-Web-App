@@ -1,11 +1,28 @@
 import type { NextRequest } from "next/server";
 import { ok, handleError } from "@/lib/http";
 import { requireAuth } from "@/lib/auth/session";
+import { NotFoundError } from "@/lib/errors";
 import { updateRouteSchema } from "@/validators/route";
 import { updateRouteUseCase } from "@/usecases/routes/update-route.usecase";
 import { deleteRouteUseCase } from "@/usecases/routes/delete-route.usecase";
+import { routeRepository } from "@/repositories/route.repository";
 
 export const runtime = "nodejs";
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string; routeId: string }> },
+) {
+  try {
+    await requireAuth();
+    const { id, routeId } = await params;
+    const route = await routeRepository.findById(routeId, id);
+    if (!route) throw new NotFoundError("Route");
+    return ok({ route });
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 export async function PATCH(
   req: NextRequest,

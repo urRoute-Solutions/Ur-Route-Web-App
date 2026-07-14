@@ -78,16 +78,30 @@ export const tripRepository = {
       where: { isActive: true, deletedAt: null },
       select: { origin: true, destination: true },
     });
-    const origins      = [...new Set(routes.map((r) => r.origin))].sort();
-    const destinations = [...new Set(routes.map((r) => r.destination))].sort();
+    // Route data can carry the same city in different casings depending on
+    // whether it was typed as an origin or a destination (operators type
+    // freely at route-creation time). The frontend merges both lists into
+    // one autocomplete set, so canonicalize casing across BOTH lists
+    // together — not each list on its own — or the same city can still show
+    // up twice once merged (e.g. "Coimbatore" as a destination, "coimbatore"
+    // as a different route's origin).
+    const canonical = canonicalCasing([
+      ...routes.map((r) => r.origin),
+      ...routes.map((r) => r.destination),
+    ]);
+    const origins      = dedupeWithCanonical(routes.map((r) => r.origin), canonical);
+    const destinations = dedupeWithCanonical(routes.map((r) => r.destination), canonical);
     return { origins, destinations };
   },
 
   listByOperator(
     operatorId: string,
-    params: { page: number; pageSize: number },
+    params: { page: number; pageSize: number; routeId?: string },
   ): Promise<[Trip[], number]> {
-    const where: Prisma.TripWhereInput = { operatorId };
+    const where: Prisma.TripWhereInput = {
+      operatorId,
+      ...(params.routeId ? { routeId: params.routeId } : {}),
+    };
     return Promise.all([
       prisma.trip.findMany({
         where,
@@ -133,3 +147,19 @@ export const tripRepository = {
     });
   },
 };
+
+/** Maps each city's lowercase form to the first-seen casing across a combined pool of values. */
+function canonicalCasing(values: string[]): Map<string, string> {
+  const canonical = new Map<string, string>();
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (!canonical.has(key)) canonical.set(key, value);
+  }
+  return canonical;
+}
+
+/** Dedup a list case-insensitively, using a shared canonical casing so the same city reads identically across separate lists. */
+function dedupeWithCanonical(values: string[], canonical: Map<string, string>): string[] {
+  const keys = new Set(values.map((v) => v.toLowerCase()));
+  return [...keys].map((k) => canonical.get(k)!).sort((a, b) => a.localeCompare(b));
+}

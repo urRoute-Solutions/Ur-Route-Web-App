@@ -37,7 +37,8 @@ async function checkApi(baseUrl: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-cron-secret");
-  if (secret !== getEnv().JWT_ACCESS_SECRET) {
+  const configured = getEnv().CRON_SECRET;
+  if (!configured || secret !== configured) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

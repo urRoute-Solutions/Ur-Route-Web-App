@@ -7,14 +7,14 @@ import { auditService } from "@/services/audit.service";
 
 export const runtime = "nodejs";
 
-const URID_PATTERN = /^[A-Z]{7,9}$/;
+const URID_PATTERN = /^OPR-[A-Z]{7,9}$/;
 
 export async function GET(req: NextRequest) {
   try {
     const principal = await requireAgent();
     const urid = (req.nextUrl.searchParams.get("urid") ?? "").trim().toUpperCase();
     if (!URID_PATTERN.test(urid)) {
-      throw new ValidationError({ urid: ["Must be 7 letters"] });
+      throw new ValidationError({ urid: ["Must be an operator URID, e.g. OPR-STBKNTY"] });
     }
 
     const result = await lookupOperatorByUridUseCase(urid);

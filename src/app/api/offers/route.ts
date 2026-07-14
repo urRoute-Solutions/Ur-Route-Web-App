@@ -3,8 +3,19 @@ import { ok, handleError } from "@/lib/http";
 import { requireOperator } from "@/lib/auth/session";
 import { createOfferTemplateSchema } from "@/validators/offer-template";
 import { createOfferTemplateUseCase } from "@/usecases/offers/create-offer-template.usecase";
+import { offerTemplateRepository } from "@/repositories/offer-template.repository";
 
 export const runtime = "nodejs";
+
+export async function GET() {
+  try {
+    const principal = await requireOperator();
+    const templates = await offerTemplateRepository.listByOperator(principal.operatorId);
+    return ok({ templates });
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {

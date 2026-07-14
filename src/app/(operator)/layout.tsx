@@ -4,6 +4,7 @@ import { userRepository } from "@/repositories/user.repository";
 import { operatorRepository } from "@/repositories/operator.repository";
 import { OperatorNav } from "@/components/layout/operator-nav";
 import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
+import { PendingApprovalBanner } from "@/components/operator/pending-approval-banner";
 
 export default async function OperatorLayout({ children }: { children: React.ReactNode }) {
   const principal = await getPrincipal();
@@ -23,6 +24,7 @@ export default async function OperatorLayout({ children }: { children: React.Rea
         operatorName={operator?.name}
       />
       <div className="flex flex-1 min-w-0 flex-col md:pt-0 pt-14">
+        {operator && operator.status !== "ACTIVE" && <PendingApprovalBanner status={operator.status} />}
         {!user.emailVerified && <VerifyEmailBanner email={user.email} />}
         <main className="flex-1">{children}</main>
       </div>

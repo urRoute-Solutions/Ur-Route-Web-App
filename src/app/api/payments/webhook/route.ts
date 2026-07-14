@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { ok, handleError } from "@/lib/http";
 import { getEnv } from "@/config/env";
 import { prisma } from "@/lib/prisma";
-import { completeBookingRewardsUseCase } from "@/usecases/rewards/complete-booking.usecase";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";

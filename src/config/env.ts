@@ -22,6 +22,11 @@ const serverSchema = z.object({
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(1_209_600),
 
+  // Dedicated secret for the cron-triggered routes (/api/cron/*) — kept
+  // separate from the JWT secrets so rotating one never silently affects
+  // the other, and so a leaked cron secret can't be used to forge sessions.
+  CRON_SECRET: z.string().min(16).optional(),
+
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 

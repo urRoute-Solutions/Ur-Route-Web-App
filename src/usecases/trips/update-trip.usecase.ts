@@ -3,8 +3,9 @@ import { operatorRepository } from "@/repositories/operator.repository";
 import { tripRepository } from "@/repositories/trip.repository";
 import { toTripDTO, type TripDTO } from "@/dto/trip.dto";
 import { auditService } from "@/services/audit.service";
-import { rewardQueue } from "@/queues";
+import { completeBookingRewardsUseCase } from "@/usecases/rewards/complete-booking.usecase";
 import { notificationService } from "@/services/notification.service";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import type { UpdateTripInput } from "@/validators/trip";
 import type { AuthPrincipal } from "@/types/auth";
@@ -51,10 +52,17 @@ export async function updateTripUseCase(
       { timeout: 15000 },
     );
 
+    // Reward progress is a plain DB write with no external dependency of its
+    // own — call it directly rather than through the BullMQ queue, so it
+    // isn't silently skipped in any environment where the queue worker isn't
+    // running alongside the web server. One booking's failure shouldn't block
+    // the rest, so each is isolated and logged rather than awaited together.
     await Promise.all(
       completedBookings.map((b) =>
         Promise.all([
-          rewardQueue.add("complete", { bookingId: b.id, userId: b.userId, operatorId }, { attempts: 3 }),
+          completeBookingRewardsUseCase(b.id, b.userId, operatorId).catch((err) =>
+            logger.error("Failed to advance reward progress", { bookingId: b.id, userId: b.userId, operatorId, err }),
+          ),
           notificationService.sendInApp(
             b.userId,
             "TRIP_COMPLETED",

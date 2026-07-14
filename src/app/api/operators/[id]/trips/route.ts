@@ -32,7 +32,8 @@ export async function GET(
     const { searchParams } = req.nextUrl;
     const page = Number(searchParams.get("page") ?? 1);
     const pageSize = Number(searchParams.get("pageSize") ?? 20);
-    const [trips, total] = await tripRepository.listByOperator(id, { page, pageSize });
+    const routeId = searchParams.get("routeId") ?? undefined;
+    const [trips, total] = await tripRepository.listByOperator(id, { page, pageSize, routeId });
     return ok({ items: trips.map(toTripDTO), total, page, pageSize });
   } catch (error) {
     return handleError(error);

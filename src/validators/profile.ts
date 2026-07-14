@@ -7,6 +7,7 @@ export const updateProfileSchema = z
     phone: z
       .string()
       .regex(/^\+?[0-9]{10,15}$/, "Invalid phone number")
+      .nullable()
       .optional(),
     avatarUrl: z.string().url().optional(),
     birthday: z.coerce.date().optional(),

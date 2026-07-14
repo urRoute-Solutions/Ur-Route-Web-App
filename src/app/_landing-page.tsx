@@ -545,7 +545,7 @@ export function LandingPage() {
             {POPULAR_ROUTES.map((r, i) => (
               <FadeUp key={`${r.from}-${r.to}`} delay={i * 0.07}>
                 <Link
-                  href={`/search?from=${r.from}&to=${r.to}`}
+                  href={`/search?origin=${encodeURIComponent(r.from)}&destination=${encodeURIComponent(r.to)}`}
                   className="group block overflow-hidden rounded-2xl border border-border transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5"
                 >
                   {/* Color band */}

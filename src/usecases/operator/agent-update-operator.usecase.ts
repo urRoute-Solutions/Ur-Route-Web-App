@@ -47,6 +47,9 @@ export async function agentUpdateOperatorUseCase(
   if (ticket.subjectEntityType !== "OPERATOR" || !ticket.operatorId) {
     throw new ValidationError({ operatorId: ["Attach and verify an operator on this ticket first"] });
   }
+  if (ticket.status === "RESOLVED" || ticket.status === "CLOSED") {
+    throw new ValidationError({ ticketId: ["This ticket is already resolved — reopen it before making further changes"] });
+  }
 
   const operator = await operatorRepository.findById(ticket.operatorId);
   if (!operator) throw new NotFoundError("Operator");

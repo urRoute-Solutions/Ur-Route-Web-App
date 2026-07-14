@@ -69,8 +69,8 @@ export default function AgentOperatorLookupPage() {
           <input
             value={urid}
             onChange={(e) => setUrid(e.target.value.toUpperCase())}
-            placeholder="e.g. STBKNTY"
-            maxLength={9}
+            placeholder="e.g. OPR-STBKNTY"
+            maxLength={11}
             className="w-full h-10 rounded-lg border border-slate-700 bg-slate-900 pl-9 pr-3 text-sm font-mono tracking-widest text-white placeholder:text-slate-600 placeholder:tracking-normal focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>

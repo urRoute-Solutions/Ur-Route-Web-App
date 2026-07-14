@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { getRedis } from "@/lib/redis";
 import { getEnv } from "@/config/env";
+import { AppError } from "@/lib/errors";
 
 const TOKEN_TTL = 24 * 60 * 60; // 24 hours
 
@@ -11,7 +12,7 @@ function redisKey(token: string) {
 /** Generates a token, stores it in Redis, and returns the full verification URL. */
 export async function createVerificationToken(userId: string): Promise<string> {
   const redis = getRedis();
-  if (!redis) throw new Error("Redis is not configured");
+  if (!redis) throw new AppError("Email verification is not configured", 503, "AUTH_PROVIDER_UNAVAILABLE");
 
   const token = crypto.randomBytes(32).toString("hex");
   await redis.set(redisKey(token), userId, { ex: TOKEN_TTL });

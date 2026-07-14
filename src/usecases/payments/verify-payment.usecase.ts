@@ -1,7 +1,6 @@
 import { AppError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { paymentService } from "@/services/payment.service";
-import { completeBookingRewardsUseCase } from "@/usecases/rewards/complete-booking.usecase";
 
 const REFERRAL_CREDIT_MINOR = 5000; // ₹50 per successful referral
 

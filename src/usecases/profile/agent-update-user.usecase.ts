@@ -41,6 +41,9 @@ export async function agentUpdateUserUseCase(
   if (ticket.subjectEntityType !== "USER" || !ticket.subjectUserId) {
     throw new ValidationError({ subjectUserId: ["Attach and verify a user on this ticket first"] });
   }
+  if (ticket.status === "RESOLVED" || ticket.status === "CLOSED") {
+    throw new ValidationError({ ticketId: ["This ticket is already resolved — reopen it before making further changes"] });
+  }
 
   const subjectUser = await userRepository.findById(ticket.subjectUserId);
   if (!subjectUser) throw new NotFoundError("User");

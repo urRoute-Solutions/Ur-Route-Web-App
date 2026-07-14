@@ -26,4 +26,8 @@ export const offerTemplateRepository = {
   update(id: string, data: Prisma.OfferTemplateUpdateInput): Promise<OfferTemplate> {
     return prisma.offerTemplate.update({ where: { id }, data });
   },
+
+  deactivate(id: string): Promise<OfferTemplate> {
+    return prisma.offerTemplate.update({ where: { id }, data: { isActive: false } });
+  },
 };

@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const secret = req.headers.get("x-cron-secret");
-    if (secret !== getEnv().JWT_ACCESS_SECRET) {
+    const configured = getEnv().CRON_SECRET;
+    if (!configured || secret !== configured) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     await aggregateDailyAnalytics();
