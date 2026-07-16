@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError, AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { tripRepository } from "@/repositories/trip.repository";
 import { bookingRepository } from "@/repositories/booking.repository";
+import { operatorRepository } from "@/repositories/operator.repository";
 import { offerTemplateRepository } from "@/repositories/offer-template.repository";
 import { rewardProgressRepository } from "@/repositories/reward-progress.repository";
 import { handleFreezeOnBookingUseCase } from "@/usecases/rewards/freeze-progress.usecase";
@@ -30,6 +31,14 @@ export async function createBookingUseCase(
   // or a direct API call by tripId must not be able to book one anyway.
   if (trip.departureAt.getTime() <= Date.now()) {
     throw new AppError("This trip has already departed", 409, "TRIP_ALREADY_DEPARTED");
+  }
+
+  // Same reasoning for a suspended (or not-yet-approved) operator — search
+  // already excludes their trips, but a stale page or a direct API call by
+  // tripId must not be able to book one anyway.
+  const operator = await operatorRepository.findById(trip.operatorId);
+  if (!operator || operator.status !== "ACTIVE") {
+    throw new AppError("This operator is not currently accepting bookings", 409, "OPERATOR_NOT_ACTIVE");
   }
 
   // Validate requested seats belong to this trip and are available.

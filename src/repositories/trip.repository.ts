@@ -58,6 +58,10 @@ export const tripRepository = {
           { OR: [{ availableUntil: null }, { availableUntil: { gte: dayStart } }] },
         ],
       },
+      // A suspended (or still-pending) operator's previously published
+      // inventory must not stay live in search just because the trip rows
+      // themselves are untouched — status changes on the Operator, not here.
+      operator: { status: "ACTIVE" },
       departureAt:    { gte: departureLowerBound, lte: dayEnd },
       availableSeats: { gte: params.minSeats },
       status:         "SCHEDULED",
