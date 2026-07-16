@@ -58,12 +58,18 @@ export const notificationService = {
 
   async sendEmail(to: string, subject: string, html: string) {
     try {
-      await getResend().emails.send({
+      // The Resend SDK resolves normally with `{ error }` on a rejected send
+      // (invalid key, unverified domain, etc.) rather than throwing — a plain
+      // try/catch alone silently treats every failed send as a success.
+      const result = await getResend().emails.send({
         from: getEnv().EMAIL_FROM,
         to,
         subject,
         html,
       });
+      if (result.error) {
+        logger.error("Failed to send email", { to, subject, error: result.error });
+      }
     } catch (err) {
       logger.error("Failed to send email", { to, subject, err });
     }
