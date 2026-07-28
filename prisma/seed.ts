@@ -32,6 +32,13 @@ function daysFromNow(d: number, h = 0, m = 0) {
   return dt;
 }
 
+function routeDates() {
+  return {
+    availableFrom: daysFromNow(0),
+    availableUntil: daysFromNow(60),
+  };
+}
+
 function generateSeats(tripId: string, totalSeats: number, priceMinor: number, seatType: "SEATER" | "SLEEPER") {
   const seats = [];
   const half = Math.ceil(totalSeats / 2);
@@ -185,6 +192,7 @@ async function main() {
       ownerId: opUser1.id,
       name: "KPN Travels",
       slug: "kpn-travels",
+      urid: "KPNTRV1",
       description: "South India's most trusted bus service since 1985. AC sleeper and seater buses on all major routes.",
       contactEmail: "support@kpntravels.in",
       contactPhone: "+914422334455",
@@ -202,6 +210,7 @@ async function main() {
       ownerId: opUser2.id,
       name: "VRL Travels",
       slug: "vrl-travels",
+      urid: "VRLTRV1",
       description: "Karnataka's largest bus network with 1000+ buses daily across South and West India.",
       contactEmail: "care@vrltravels.in",
       contactPhone: "+918022445566",
@@ -219,6 +228,7 @@ async function main() {
       ownerId: opUser3.id,
       name: "SRS Travels",
       slug: "srs-travels",
+      urid: "SRSTRV1",
       description: "Comfortable overnight bus services connecting Hyderabad, Bengaluru, Chennai and beyond.",
       contactEmail: "help@srstravels.in",
       contactPhone: "+914023556677",
@@ -239,6 +249,10 @@ async function main() {
       destination: "Bengaluru",
       distanceKm: 346,
       durationMin: 360,
+      departureTime: "21:00",
+      arrivalTime: "03:00",
+      basePriceMinor: 85000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "21:00" },
         { name: "Tambaram", landmark: "Tambaram Railway Station", time: "21:45" },
@@ -254,6 +268,10 @@ async function main() {
       destination: "Coimbatore",
       distanceKm: 505,
       durationMin: 540,
+      departureTime: "20:30",
+      arrivalTime: "05:30",
+      basePriceMinor: 75000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "20:30" },
         { name: "Guindy", landmark: "Guindy MRTS", time: "21:00" },
@@ -269,6 +287,10 @@ async function main() {
       destination: "Chennai",
       distanceKm: 346,
       durationMin: 360,
+      departureTime: "21:30",
+      arrivalTime: "03:30",
+      basePriceMinor: 85000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "21:30" },
         { name: "Electronic City", landmark: "Electronic City Flyover", time: "22:15" },
@@ -285,6 +307,10 @@ async function main() {
       destination: "Hyderabad",
       distanceKm: 570,
       durationMin: 600,
+      departureTime: "20:00",
+      arrivalTime: "06:00",
+      basePriceMinor: 95000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "20:00" },
         { name: "Hebbal", landmark: "Hebbal Flyover", time: "20:30" },
@@ -300,6 +326,10 @@ async function main() {
       destination: "Mumbai",
       distanceKm: 981,
       durationMin: 960,
+      departureTime: "18:00",
+      arrivalTime: "10:00",
+      basePriceMinor: 140000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "18:00" },
         { name: "Yeshwanthpur", landmark: "Yeshwanthpur Circle", time: "18:30" },
@@ -315,6 +345,10 @@ async function main() {
       destination: "Bengaluru",
       distanceKm: 570,
       durationMin: 600,
+      departureTime: "21:00",
+      arrivalTime: "07:00",
+      basePriceMinor: 95000,
+      ...routeDates(),
       boardingPoints: [
         { name: "MGBS", landmark: "Mahatma Gandhi Bus Station", time: "21:00" },
         { name: "Mehdipatnam", landmark: "Mehdipatnam Circle", time: "21:30" },
@@ -331,6 +365,10 @@ async function main() {
       destination: "Chennai",
       distanceKm: 627,
       durationMin: 660,
+      departureTime: "19:30",
+      arrivalTime: "07:30",
+      basePriceMinor: 90000,
+      ...routeDates(),
       boardingPoints: [
         { name: "MGBS", landmark: "Mahatma Gandhi Bus Station", time: "19:30" },
         { name: "LB Nagar", landmark: "LB Nagar Metro", time: "20:00" },
@@ -346,6 +384,10 @@ async function main() {
       destination: "Vijayawada",
       distanceKm: 275,
       durationMin: 300,
+      departureTime: "06:00",
+      arrivalTime: "11:00",
+      basePriceMinor: 45000,
+      ...routeDates(),
       boardingPoints: [
         { name: "MGBS", landmark: "Mahatma Gandhi Bus Station", time: "06:00" },
         { name: "Uppal", landmark: "Uppal Bus Stop", time: "06:30" },
@@ -361,6 +403,10 @@ async function main() {
       destination: "Hyderabad",
       distanceKm: 627,
       durationMin: 660,
+      departureTime: "20:00",
+      arrivalTime: "08:00",
+      basePriceMinor: 90000,
+      ...routeDates(),
       boardingPoints: [
         { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "20:00" },
         { name: "Ambattur", landmark: "Ambattur Industrial Estate", time: "20:30" },
@@ -368,6 +414,159 @@ async function main() {
       droppingPoints: [
         { name: "MGBS", landmark: "Mahatma Gandhi Bus Station", time: "08:00" },
         { name: "Secunderabad", landmark: "Secunderabad Railway Station", time: "08:30" },
+      ],
+    },
+    // Additional test routes
+    {
+      operatorId: kpn.id,
+      origin: "Chennai",
+      destination: "Madurai",
+      distanceKm: 461,
+      durationMin: 480,
+      departureTime: "21:30",
+      arrivalTime: "05:30",
+      basePriceMinor: 70000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "21:30" },
+        { name: "Tambaram", landmark: "Tambaram Railway Station", time: "22:15" },
+      ],
+      droppingPoints: [
+        { name: "Mattuthavani Bus Stand", landmark: "Madurai Central", time: "05:30" },
+        { name: "Anna Nagar", landmark: "Anna Nagar Tower", time: "05:50" },
+      ],
+    },
+    {
+      operatorId: kpn.id,
+      origin: "Madurai",
+      destination: "Chennai",
+      distanceKm: 461,
+      durationMin: 480,
+      departureTime: "20:30",
+      arrivalTime: "04:30",
+      basePriceMinor: 70000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Mattuthavani Bus Stand", landmark: "Madurai Central", time: "20:30" },
+        { name: "Melur Road", landmark: "Melur Toll", time: "21:00" },
+      ],
+      droppingPoints: [
+        { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "04:30" },
+        { name: "Tambaram", landmark: "Tambaram Railway Station", time: "05:00" },
+      ],
+    },
+    {
+      operatorId: vrl.id,
+      origin: "Chennai",
+      destination: "Pondicherry",
+      distanceKm: 162,
+      durationMin: 180,
+      departureTime: "07:00",
+      arrivalTime: "10:00",
+      basePriceMinor: 25000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "07:00" },
+        { name: "Tidel Park", landmark: "Tidel Park IT Corridor", time: "07:30" },
+      ],
+      droppingPoints: [
+        { name: "Pondicherry Bus Stand", landmark: "New Bus Stand", time: "10:00" },
+        { name: "White Town", landmark: "Promenade Beach Junction", time: "10:20" },
+      ],
+    },
+    {
+      operatorId: vrl.id,
+      origin: "Pondicherry",
+      destination: "Chennai",
+      distanceKm: 162,
+      durationMin: 180,
+      departureTime: "06:00",
+      arrivalTime: "09:00",
+      basePriceMinor: 25000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Pondicherry Bus Stand", landmark: "New Bus Stand", time: "06:00" },
+        { name: "Villupuram", landmark: "Villupuram Junction", time: "06:45" },
+      ],
+      droppingPoints: [
+        { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "09:00" },
+        { name: "Guindy", landmark: "Guindy MRTS", time: "09:20" },
+      ],
+    },
+    {
+      operatorId: srs.id,
+      origin: "Coimbatore",
+      destination: "Bengaluru",
+      distanceKm: 365,
+      durationMin: 390,
+      departureTime: "22:00",
+      arrivalTime: "04:30",
+      basePriceMinor: 65000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Gandhipuram", landmark: "Coimbatore Central", time: "22:00" },
+        { name: "Singanallur", landmark: "Singanallur Bus Stop", time: "22:30" },
+      ],
+      droppingPoints: [
+        { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "04:30" },
+        { name: "Electronic City", landmark: "Electronic City Flyover", time: "05:00" },
+      ],
+    },
+    {
+      operatorId: srs.id,
+      origin: "Bengaluru",
+      destination: "Coimbatore",
+      distanceKm: 365,
+      durationMin: 390,
+      departureTime: "21:00",
+      arrivalTime: "03:30",
+      basePriceMinor: 65000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "21:00" },
+        { name: "Silk Board", landmark: "Silk Board Junction", time: "21:30" },
+      ],
+      droppingPoints: [
+        { name: "Gandhipuram", landmark: "Coimbatore Central", time: "03:30" },
+        { name: "RS Puram", landmark: "RS Puram Bus Stop", time: "03:50" },
+      ],
+    },
+    {
+      operatorId: kpn.id,
+      origin: "Chennai",
+      destination: "Trichy",
+      distanceKm: 330,
+      durationMin: 360,
+      departureTime: "22:00",
+      arrivalTime: "04:00",
+      basePriceMinor: 55000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Koyambedu Bus Stand", landmark: "CMBT", time: "22:00" },
+        { name: "Tambaram", landmark: "Tambaram Railway Station", time: "22:45" },
+      ],
+      droppingPoints: [
+        { name: "Chatram Bus Stand", landmark: "Trichy Central", time: "04:00" },
+        { name: "Srirangam", landmark: "Srirangam Temple", time: "04:30" },
+      ],
+    },
+    {
+      operatorId: vrl.id,
+      origin: "Bengaluru",
+      destination: "Mangaluru",
+      distanceKm: 352,
+      durationMin: 420,
+      departureTime: "21:00",
+      arrivalTime: "04:00",
+      basePriceMinor: 70000,
+      ...routeDates(),
+      boardingPoints: [
+        { name: "Majestic", landmark: "Bengaluru City Bus Stand", time: "21:00" },
+        { name: "Nelamangala", landmark: "Nelamangala Toll", time: "21:45" },
+      ],
+      droppingPoints: [
+        { name: "KSRTC Bus Stand", landmark: "Mangaluru Central", time: "04:00" },
+        { name: "Hampankatta", landmark: "Hampankatta Circle", time: "04:20" },
       ],
     },
   ];
@@ -580,9 +779,12 @@ async function main() {
 
   ROUTES
   ─────────────────────────────────────────────
-  Chennai → Bengaluru / Coimbatore
-  Bengaluru → Chennai / Hyderabad / Mumbai
+  Chennai → Bengaluru / Coimbatore / Madurai / Hyderabad / Trichy / Pondicherry
+  Bengaluru → Chennai / Hyderabad / Mumbai / Coimbatore / Mangaluru
   Hyderabad → Chennai / Vijayawada / Bengaluru
+  Madurai → Chennai
+  Pondicherry → Chennai
+  Coimbatore → Bengaluru
   (3 trips each, next 14 days)
 
   LOYALTY LEVELS (all 3 operators)
