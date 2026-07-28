@@ -4,13 +4,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, Lock, CheckCircle, Gift, Users, Clock } from "lucide-react";
+import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, Gift, Clock } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
-import { BusLoader, BusScene } from "@/components/ui/animated-bus";
-import { StaggerList, StaggerItem, FadeUp } from "@/components/motion/primitives";
+import type { TripSearchItem } from "@/usecases/trips/search-trips.usecase";
 
 type SortKey = "price-asc" | "price-desc" | "duration";
 type DepartureWindow = "morning" | "afternoon" | "evening" | "night";
@@ -481,30 +479,29 @@ export default function SearchPage() {
               </div>
             )}
 
-            {loading && <div className="flex justify-center py-16"><BusLoader /></div>}
+            {loading && (
+              <div className="flex justify-center py-16">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Bus className="h-5 w-5 animate-pulse" />
+                  <span className="text-sm font-medium animate-pulse">Searching buses…</span>
+                </div>
+              </div>
+            )}
 
             {!loading && !searched && (
-              <FadeUp>
-                <div className="text-center py-12 space-y-6">
-                  <BusScene state="stopped" doorsOpen width={420} className="mx-auto" />
-                  <div className="space-y-2">
-                    <p className="font-bold text-lg">Ready to roll?</p>
-                    <p className="text-sm text-muted-foreground">Enter origin, destination and date above to see available buses.</p>
-                  </div>
-                </div>
-              </FadeUp>
+              <div className="text-center py-16 space-y-3">
+                <Bus className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                <p className="font-bold text-lg">Ready to roll?</p>
+                <p className="text-sm text-muted-foreground">Enter origin, destination and date above to see available buses.</p>
+              </div>
             )}
 
             {!loading && searched && results.length === 0 && (
-              <FadeUp>
-                <div className="text-center py-12 space-y-6">
-                  <BusScene state="departing" width={420} className="mx-auto" />
-                  <div className="space-y-2">
-                    <p className="font-bold text-lg">No buses found</p>
-                    <p className="text-sm text-muted-foreground">Looks like the bus just left. Try a different date or route.</p>
-                  </div>
-                </div>
-              </FadeUp>
+              <div className="text-center py-16 space-y-3">
+                <Bus className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                <p className="font-bold text-lg">No buses found</p>
+                <p className="text-sm text-muted-foreground">Looks like the bus just left. Try a different date or route.</p>
+              </div>
             )}
 
             {!loading && filtered.length > 0 && (
@@ -522,11 +519,11 @@ export default function SearchPage() {
             )}
 
             {!loading && filtered.length > 0 && (
-              <StaggerList className="space-y-4">
+              <div className="space-y-4">
                 {filtered.map((trip) => (
-                  <StaggerItem key={trip.id}><TripCard trip={trip} /></StaggerItem>
+                  <TripCard key={trip.id} trip={trip} />
                 ))}
-              </StaggerList>
+              </div>
             )}
           </div>
         </div>
