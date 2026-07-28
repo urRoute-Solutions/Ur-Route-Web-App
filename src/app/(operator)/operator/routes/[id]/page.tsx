@@ -3,6 +3,11 @@ import { routeRepository } from "@/repositories/route.repository";
 import { notFound } from "next/navigation";
 import { EditRouteForm } from "./edit-route-form";
 
+function toDateStr(d: Date | null): string {
+  if (!d) return "";
+  return d.toISOString().slice(0, 10);
+}
+
 export default async function EditRoutePage({ params }: { params: Promise<{ id: string }> }) {
   const { operatorId } = await requireOperator();
   const { id } = await params;
@@ -18,7 +23,11 @@ export default async function EditRoutePage({ params }: { params: Promise<{ id: 
         origin: route.origin,
         destination: route.destination,
         distanceKm: route.distanceKm?.toString() ?? "",
-        durationMin: route.durationMin?.toString() ?? "",
+        fareRupees: route.basePriceMinor ? (route.basePriceMinor / 100).toFixed(0) : "",
+        departureTime: route.departureTime ?? "",
+        arrivalTime: route.arrivalTime ?? "",
+        availableFrom: toDateStr(route.availableFrom),
+        availableUntil: toDateStr(route.availableUntil),
         isActive: route.isActive,
       }}
     />
