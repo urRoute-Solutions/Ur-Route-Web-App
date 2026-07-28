@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -35,6 +35,7 @@ interface Props {
 export function EditOfferForm({ templateId, operatorId, initial }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [discountType, setDiscountType] = useState<"PERCENTAGE" | "FLAT">(initial.discountType);
   const [form, setForm] = useState(initial);
 
@@ -156,12 +157,43 @@ export function EditOfferForm({ templateId, operatorId, initial }: Props) {
         </div>
 
         <div className="flex gap-3 pt-1">
-          <Button type="submit" disabled={saving} className="flex-1 font-semibold">
+          <Button type="submit" disabled={saving || deleting} className="flex-1 font-semibold">
             {saving ? "Saving…" : "Save changes"}
           </Button>
           <Button type="button" variant="outline" className="px-5" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
+
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-3">
+        <p className="text-sm font-semibold text-destructive">Delete this offer</p>
+        <p className="text-xs text-muted-foreground">
+          Removing the offer deactivates it immediately. Travelers already mid-journey won&apos;t be affected, but new bookings will no longer see this tier reward.
+        </p>
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          disabled={deleting || saving}
+          className="gap-2"
+          onClick={async () => {
+            if (!window.confirm("Delete this offer template? This cannot be undone.")) return;
+            setDeleting(true);
+            const res = await fetch(`/api/operators/${operatorId}/offer-templates/${templateId}`, { method: "DELETE" });
+            setDeleting(false);
+            if (res.ok) {
+              toast.success("Offer deleted");
+              router.push("/operator/offers");
+              router.refresh();
+            } else {
+              const j = await res.json();
+              toast.error(j.error?.message ?? "Failed to delete offer");
+            }
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {deleting ? "Deleting…" : "Delete offer"}
+        </Button>
+      </div>
     </div>
   );
 }
