@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, Gift, Clock } from "lucide-react";
@@ -323,6 +323,7 @@ function FavoriteRouteButton({
 
 function SearchPageInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [origin, setOrigin]           = useState(searchParams.get("origin") ?? searchParams.get("from") ?? "");
   const [destination, setDestination] = useState(searchParams.get("destination") ?? searchParams.get("to") ?? "");
@@ -363,8 +364,11 @@ function SearchPageInner() {
     });
   }, []);
 
-  async function doSearch(org: string, dest: string, dt: string) {
+  async function doSearch(org: string, dest: string, dt: string, updateUrl = false) {
     if (!org || !dest) return;
+    if (updateUrl) {
+      router.replace(`/search?origin=${encodeURIComponent(org)}&destination=${encodeURIComponent(dest)}&date=${dt}`);
+    }
     setLoading(true);
     setSearched(true);
     const params = new URLSearchParams({ origin: org, destination: dest, date: dt, pageSize: "40" });
@@ -382,7 +386,7 @@ function SearchPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleSearch(e: React.FormEvent) { e.preventDefault(); doSearch(origin, destination, date); }
+  function handleSearch(e: React.FormEvent) { e.preventDefault(); doSearch(origin, destination, date, true); }
   function handleSwap() { setOrigin(destination); setDestination(origin); }
   function toggleWindow(w: DepartureWindow) {
     setDepWindows((prev) => { const next = new Set(prev); if (next.has(w)) next.delete(w); else next.add(w); return next; });
