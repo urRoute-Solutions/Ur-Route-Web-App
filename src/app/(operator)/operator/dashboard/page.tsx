@@ -10,6 +10,7 @@ import {
   ArrowRight, MapPin, Bus, Users, TrendingUp,
   Plus, CalendarDays, IndianRupee, BookOpen,
 } from "lucide-react";
+import { FadeUp, StaggerList, StaggerItem, HoverCard, CountUp, PageTransition, PulseRing } from "@/components/motion/primitives";
 
 function greetingPart() {
   const h = new Date().getHours();
@@ -50,13 +51,17 @@ export default async function OperatorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-background">
       {/* ── Greeting banner ── */}
       <div className="bg-sidebar text-white">
         <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
+          <FadeUp>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-white/60 text-sm mb-1">{greetingPart()}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <PulseRing />
+                <p className="text-white/60 text-sm">{greetingPart()}</p>
+              </div>
               <h1 className="text-2xl font-extrabold tracking-tight">{firstName}</h1>
               <p className="text-white/50 text-sm mt-1">
                 {totalBookings > 0
@@ -77,28 +82,32 @@ export default async function OperatorDashboardPage() {
               </Link>
             </div>
           </div>
+          </FadeUp>
         </div>
       </div>
 
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* ── Stat cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerList className="grid grid-cols-2 lg:grid-cols-4 gap-4" delay={0.1}>
           {STATS.map(({ icon: Icon, label, value, color, bg, href }) => (
-            <Link
-              key={label}
-              href={href}
-              className="group bg-white dark:bg-card border border-border rounded-xl p-5 flex items-start gap-4 hover:border-primary/30 hover:shadow-sm transition-all"
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg} ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-extrabold leading-none">{value}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-tight">{label}</p>
-              </div>
-            </Link>
+            <StaggerItem key={label}>
+              <HoverCard>
+                <Link
+                  href={href}
+                  className="group bg-white dark:bg-card border border-border rounded-xl p-5 flex items-start gap-4 hover:border-primary/30 hover:shadow-sm transition-all block"
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg} ${color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-2xl font-extrabold leading-none">{value}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-tight">{label}</p>
+                  </div>
+                </Link>
+              </HoverCard>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerList>
 
         {/* ── Recent content grid ── */}
         <div className="grid lg:grid-cols-2 gap-6">
@@ -202,6 +211,6 @@ export default async function OperatorDashboardPage() {
           ))}
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

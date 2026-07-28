@@ -1,8 +1,9 @@
 import { requireAgent } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { Ticket, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Ticket, CheckCircle, Clock, AlertCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { FadeUp, StaggerList, StaggerItem, CountUp, PageTransition, PulseRing } from "@/components/motion/primitives";
 
 function ticketNumber(seq: number) {
   return `TKT-${String(seq).padStart(5, "0")}`;
@@ -39,27 +40,36 @@ export default async function AgentDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-white">Agent Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">Your support queue overview.</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className={cn("rounded-xl border p-5", s.bg)}>
-            <s.icon className={cn("h-5 w-5 mb-3", s.color)} />
-            <p className={cn("text-3xl font-black", s.color)}>{s.value}</p>
-            <p className="text-sm font-medium text-slate-300 mt-0.5">{s.label}</p>
+    <PageTransition className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 space-y-6">
+      <FadeUp>
+        <div className="flex items-center gap-3">
+          <PulseRing className="[--tw-bg-opacity:1]" />
+          <div>
+            <h1 className="text-2xl font-black text-white">Agent Dashboard</h1>
+            <p className="mt-0.5 text-sm text-slate-400">Your support queue overview.</p>
           </div>
+        </div>
+      </FadeUp>
+
+      <StaggerList className="grid grid-cols-1 sm:grid-cols-3 gap-4" delay={0.1}>
+        {stats.map((s) => (
+          <StaggerItem key={s.label}>
+            <div className={cn("rounded-xl border p-5", s.bg)}>
+              <s.icon className={cn("h-5 w-5 mb-3", s.color)} />
+              <CountUp to={s.value} className={cn("text-3xl font-black", s.color)} />
+              <p className="text-sm font-medium text-slate-300 mt-0.5">{s.label}</p>
+            </div>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerList>
 
       {recent.length > 0 && (
+        <FadeUp delay={0.2}>
         <div>
           <h2 className="text-base font-bold text-white mb-3">Active tickets</h2>
-          <div className="space-y-2">
+          <StaggerList className="space-y-2">
             {recent.map((t) => (
+              <StaggerItem key={t.id}>
               <Link
                 key={t.id}
                 href={`/agent/tickets/${t.id}`}
@@ -88,21 +98,33 @@ export default async function AgentDashboardPage() {
                   {t.status.replace("_", " ")}
                 </span>
               </Link>
+              </StaggerItem>
             ))}
+          </StaggerList>
+          <div className="mt-3 flex items-center gap-4">
+            <Link href="/agent/tickets" className="text-xs text-blue-400 hover:text-blue-300 hover:underline">
+              View all tickets →
+            </Link>
+            <Link href="/agent/users" className="flex items-center gap-1 text-xs text-slate-400 hover:text-white hover:underline">
+              <Users className="h-3 w-3" /> Search users
+            </Link>
           </div>
-          <Link href="/agent/tickets" className="mt-3 inline-block text-xs text-blue-400 hover:text-blue-300 hover:underline">
-            View all →
-          </Link>
         </div>
+        </FadeUp>
       )}
 
       {recent.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-800 py-16 text-center">
-          <Ticket className="mx-auto h-10 w-10 text-slate-600 mb-3" />
-          <p className="text-slate-300 font-semibold">No active tickets</p>
-          <p className="text-slate-500 text-sm mt-1">Go online to start receiving tickets.</p>
-        </div>
+        <FadeUp delay={0.2}>
+          <div className="rounded-xl border border-dashed border-slate-800 py-16 text-center">
+            <Ticket className="mx-auto h-10 w-10 text-slate-600 mb-3" />
+            <p className="text-slate-300 font-semibold">No active tickets</p>
+            <p className="text-slate-500 text-sm mt-1">Go online to start receiving tickets.</p>
+            <Link href="/agent/users" className="mt-4 inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 hover:underline">
+              <Users className="h-3 w-3" /> Search users
+            </Link>
+          </div>
+        </FadeUp>
       )}
-    </div>
+    </PageTransition>
   );
 }

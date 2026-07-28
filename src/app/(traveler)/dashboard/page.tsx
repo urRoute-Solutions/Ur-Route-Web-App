@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { ArrowRight, Bus, Gift, Search, TrendingUp, Ticket, Users, Wallet, Star } from "lucide-react";
+import { FadeUp, StaggerList, StaggerItem, HoverCard, CountUp, PageTransition, PulseRing } from "@/components/motion/primitives";
 
 const LEVEL_META: Record<string, { label: string; next: string; max: number; bar: string; badge: string }> = {
   LEVEL_1: { label: "Welcome", next: "Stay",     max: 4,  bar: "bg-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" },
@@ -48,210 +49,223 @@ export default async function DashboardPage() {
   const firstName = user?.fullName?.split(" ")[0] ?? "there";
   const walletBalance = (user as { walletBalanceMinor?: number })?.walletBalanceMinor ?? 0;
 
+  const stats = [
+    { icon: Ticket, label: "Total Bookings",       value: totalBookings,       color: "text-primary",    bg: "bg-primary/10" },
+    { icon: Bus,    label: "Trips Completed",       value: totalTrips,          color: "text-action",     bg: "bg-action/10" },
+    { icon: Users,  label: "Operators Ridden",      value: allProgress.length,  color: "text-blue-500",   bg: "bg-blue-500/10" },
+    { icon: Gift,   label: "Reward Levels Active",  value: activeProgress.length, color: "text-amber-500", bg: "bg-amber-500/10" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-background">
       {/* ── Greeting banner ──────────────────────────────────── */}
       <div className="bg-sidebar text-white">
         <div className="container py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-white/60 text-sm mb-1">{greetingPart()}</p>
-              <h1 className="text-2xl font-extrabold tracking-tight">
-                {firstName}
-              </h1>
-              <p className="text-white/50 text-sm mt-1">
-                {totalBookings > 0
-                  ? `You have ${totalBookings} booking${totalBookings !== 1 ? "s" : ""} so far.`
-                  : "Start your first journey today."}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              {walletBalance > 0 && (
-                <div className="flex items-center gap-1.5 bg-white/10 text-white rounded-xl px-3 py-2">
-                  <Wallet className="h-4 w-4 text-white/70" />
-                  <div>
-                    <p className="text-[10px] text-white/60 leading-none">Wallet</p>
-                    <p className="text-sm font-bold leading-none mt-0.5">₹{(walletBalance / 100).toFixed(0)}</p>
-                  </div>
+          <FadeUp>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <PulseRing />
+                  <p className="text-white/60 text-sm">{greetingPart()}</p>
                 </div>
-              )}
-              <Link href="/search">
-                <Button variant="action" className="font-semibold gap-2">
-                  <Search className="h-4 w-4" />
-                  Search Buses
-                </Button>
-              </Link>
+                <h1 className="text-2xl font-extrabold tracking-tight">{firstName}</h1>
+                <p className="text-white/50 text-sm mt-1">
+                  {totalBookings > 0
+                    ? `You have ${totalBookings} booking${totalBookings !== 1 ? "s" : ""} so far.`
+                    : "Start your first journey today."}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {walletBalance > 0 && (
+                  <div className="flex items-center gap-1.5 bg-white/10 text-white rounded-xl px-3 py-2">
+                    <Wallet className="h-4 w-4 text-white/70" />
+                    <div>
+                      <p className="text-[10px] text-white/60 leading-none">Wallet</p>
+                      <p className="text-sm font-bold leading-none mt-0.5">₹{(walletBalance / 100).toFixed(0)}</p>
+                    </div>
+                  </div>
+                )}
+                <Link href="/search">
+                  <Button variant="action" className="font-semibold gap-2">
+                    <Search className="h-4 w-4" />
+                    Search Buses
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+          </FadeUp>
         </div>
       </div>
 
-      <div className="container py-8 space-y-8">
+      <div className="container py-8 space-y-10">
 
         {/* ── Stats strip ──────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Ticket, label: "Total Bookings", value: totalBookings, color: "text-primary" },
-            { icon: Bus, label: "Trips Completed", value: totalTrips, color: "text-action" },
-            { icon: Users, label: "Operators Ridden", value: allProgress.length, color: "text-blue-500" },
-            { icon: Gift, label: "Reward Levels Active", value: activeProgress.length, color: "text-amber-500" },
-          ].map(({ icon: Icon, label, value, color }) => (
-            <div
-              key={label}
-              className="bg-white dark:bg-card border border-border rounded-xl p-5 flex items-start gap-4"
-            >
-              <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0 ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-extrabold leading-none">{value}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-tight">{label}</p>
-              </div>
-            </div>
+        <StaggerList className="grid grid-cols-2 md:grid-cols-4 gap-4" delay={0.1}>
+          {stats.map(({ icon: Icon, label, value, color, bg }) => (
+            <StaggerItem key={label}>
+              <HoverCard className="bg-white dark:bg-card border border-border rounded-xl p-5 flex items-start gap-4 h-full">
+                <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center shrink-0 ${color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <CountUp to={value} className="text-2xl font-extrabold leading-none" />
+                  <p className="text-xs text-muted-foreground mt-1 leading-tight">{label}</p>
+                </div>
+              </HoverCard>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerList>
 
         {/* ── Favourite routes ─────────────────────────────────── */}
         {favoriteRoutes.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                Favourite Routes
-              </h2>
-              <Link href="/search" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
-                Search all <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {favoriteRoutes.map((r) => {
-                const today = new Date().toISOString().slice(0, 10);
-                return (
-                  <Link
-                    key={r.id}
-                    href={`/search?origin=${encodeURIComponent(r.origin)}&destination=${encodeURIComponent(r.destination)}&date=${today}`}
-                    className="bg-white dark:bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/30 hover:bg-muted/20 transition-all group"
-                  >
-                    <div className="shrink-0 w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
-                      <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold truncate">{r.origin}</p>
-                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-0.5">
-                        <ArrowRight className="h-2.5 w-2.5 shrink-0" /> {r.destination}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
+          <FadeUp delay={0.2}>
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  Favourite Routes
+                </h2>
+                <Link href="/search" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                  Search all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <StaggerList className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {favoriteRoutes.map((r) => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  return (
+                    <StaggerItem key={r.id}>
+                      <Link
+                        href={`/search?origin=${encodeURIComponent(r.origin)}&destination=${encodeURIComponent(r.destination)}&date=${today}`}
+                        className="bg-white dark:bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/30 hover:bg-muted/20 transition-all group block"
+                      >
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold truncate">{r.origin}</p>
+                          <p className="text-[10px] text-muted-foreground truncate flex items-center gap-0.5">
+                            <ArrowRight className="h-2.5 w-2.5 shrink-0" /> {r.destination}
+                          </p>
+                        </div>
+                      </Link>
+                    </StaggerItem>
+                  );
+                })}
+              </StaggerList>
+            </section>
+          </FadeUp>
         )}
 
         {/* ── Loyalty progress ─────────────────────────────────── */}
         {activeProgress.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2">
-                <Gift className="h-4 w-4 text-amber-500" />
-                Loyalty Progress
-              </h2>
-              <Link href="/rewards" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
+          <FadeUp delay={0.3}>
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-amber-500" />
+                  Loyalty Progress
+                </h2>
+                <Link href="/rewards" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {activeProgress.map((p) => {
-                const meta = LEVEL_META[p.currentLevel];
-                const pct = meta ? Math.min(100, (p.completedTrips / meta.max) * 100) : 0;
-                return (
-                  <div key={p.operatorId} className="bg-white dark:bg-card border border-border rounded-xl p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meta?.badge ?? "bg-muted text-muted-foreground"}`}>
-                        {meta?.label ?? p.currentLevel}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{p.completedTrips} / {meta?.max ?? "?"} trips</span>
-                    </div>
-                    <Progress value={pct} className={`h-2 ${meta?.bar ?? ""}`} />
-                    <p className="text-xs text-muted-foreground">
-                      {meta && p.currentLevel !== "LEVEL_4"
-                        ? `${Math.max(0, meta.max - p.completedTrips)} more trips to ${meta.next}`
-                        : "Champion — you're at the top!"}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+              <div className="grid md:grid-cols-2 gap-4">
+                {activeProgress.map((p) => {
+                  const meta = LEVEL_META[p.currentLevel];
+                  const pct = meta ? Math.min(100, (p.completedTrips / meta.max) * 100) : 0;
+                  return (
+                    <HoverCard key={p.operatorId} className="bg-white dark:bg-card border border-border rounded-xl p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meta?.badge ?? "bg-muted text-muted-foreground"}`}>
+                          {meta?.label ?? p.currentLevel}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{p.completedTrips} / {meta?.max ?? "?"} trips</span>
+                      </div>
+                      <Progress value={pct} className={`h-2 ${meta?.bar ?? ""}`} />
+                      <p className="text-xs text-muted-foreground">
+                        {meta && p.currentLevel !== "LEVEL_4"
+                          ? `${Math.max(0, meta.max - p.completedTrips)} more trips to ${meta.next}`
+                          : "Champion — you're at the top!"}
+                      </p>
+                    </HoverCard>
+                  );
+                })}
+              </div>
+            </section>
+          </FadeUp>
         )}
 
         {/* ── CTA if no loyalty progress ───────────────────────── */}
         {allProgress.length === 0 && (
-          <div className="bg-white dark:bg-card border border-dashed border-border rounded-xl p-10 text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-              <Bus className="h-7 w-7 text-muted-foreground/40" />
+          <FadeUp delay={0.2}>
+            <div className="bg-white dark:bg-card border border-dashed border-border rounded-xl p-10 text-center space-y-3">
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+                <Bus className="h-7 w-7 text-muted-foreground/40" />
+              </div>
+              <p className="font-bold">Start your first journey</p>
+              <p className="text-sm text-muted-foreground">Book a bus and start earning loyalty rewards.</p>
+              <Link href="/search">
+                <Button variant="action" className="mt-1">Search buses</Button>
+              </Link>
             </div>
-            <p className="font-bold">Start your first journey</p>
-            <p className="text-sm text-muted-foreground">Book a bus and start earning loyalty rewards.</p>
-            <Link href="/search">
-              <Button variant="action" className="mt-1">Search buses</Button>
-            </Link>
-          </div>
+          </FadeUp>
         )}
 
         {/* ── Recent bookings ───────────────────────────────────── */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Recent Bookings
-            </h2>
-            <Link href="/bookings" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
-              All bookings <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          {bookings.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No bookings yet. Book your first bus!</p>
-          ) : (
-            <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
-              {bookings.map((b, idx) => (
-                <Link
-                  key={b.id}
-                  href={`/bookings/${b.id}`}
-                  className={`flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer ${
-                    idx !== bookings.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Bus className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-mono font-semibold text-sm">{b.pnr}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {new Date(b.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric", month: "short", year: "numeric"
-                        })} · {b.passengerCount} pax
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="font-bold text-sm">₹{(b.totalFareMinor / 100).toFixed(0)}</p>
-                    </div>
-                    <Badge variant={statusVariant(b.status)} className="text-[10px]">
-                      {b.status}
-                    </Badge>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                </Link>
-              ))}
+        <FadeUp delay={0.35}>
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Recent Bookings
+              </h2>
+              <Link href="/bookings" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                All bookings <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
-          )}
-        </section>
+
+            {bookings.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No bookings yet. Book your first bus!</p>
+            ) : (
+              <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
+                {bookings.map((b, idx) => (
+                  <Link
+                    key={b.id}
+                    href={`/bookings/${b.id}`}
+                    className={`flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer ${
+                      idx !== bookings.length - 1 ? "border-b border-border" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Bus className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-mono font-semibold text-sm">{b.pnr}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {new Date(b.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric", month: "short", year: "numeric"
+                          })} · {b.passengerCount} pax
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="font-bold text-sm">₹{(b.totalFareMinor / 100).toFixed(0)}</p>
+                      </div>
+                      <Badge variant={statusVariant(b.status)} className="text-[10px]">
+                        {b.status}
+                      </Badge>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </FadeUp>
       </div>
-    </div>
+    </PageTransition>
   );
 }

@@ -4,12 +4,13 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizontal, X, ChevronDown, ChevronUp, Lock, CheckCircle, Gift, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
+import { BusLoader, BusScene } from "@/components/ui/animated-bus";
+import { StaggerList, StaggerItem, FadeUp } from "@/components/motion/primitives";
 
 type SortKey = "price-asc" | "price-desc" | "duration";
 type DepartureWindow = "morning" | "afternoon" | "evening" | "night";
@@ -37,17 +38,10 @@ function inWindow(iso: string, window: DepartureWindow) {
 
 // ── Place autocomplete input ────────────────────────────────────────────────
 function PlaceInput({
-  value,
-  onChange,
-  placeholder,
-  places,
-  icon,
+  value, onChange, placeholder, places, icon,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  places: string[];
-  icon?: "origin" | "destination";
+  value: string; onChange: (v: string) => void; placeholder: string;
+  places: string[]; icon?: "origin" | "destination";
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -58,7 +52,6 @@ function PlaceInput({
     return places.filter((p) => p.toLowerCase().includes(q)).slice(0, 8);
   }, [value, places]);
 
-  // close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -119,7 +112,6 @@ function discountText(o: TripOffer): string {
   return "Special offer";
 }
 
-// ── Operator avatar ─────────────────────────────────────────────────────────
 function OperatorAvatar({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
   if (logoUrl) {
     return <img src={logoUrl} alt={name} className="w-10 h-10 rounded-xl object-contain border border-border bg-white" />;
@@ -132,7 +124,6 @@ function OperatorAvatar({ name, logoUrl }: { name: string; logoUrl?: string | nu
   );
 }
 
-// ── Loyalty ladder panel ────────────────────────────────────────────────────
 function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
   return (
     <div className="mt-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
@@ -147,12 +138,9 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
           const isFirst = i === 0;
           return (
             <div key={offer.level} className={cn("flex items-start gap-3 px-4 py-3", isFirst && "bg-primary/5")}>
-              {/* Level badge */}
               <div className={cn("shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-black ring-2 mt-0.5", meta.bg, meta.ring)}>
                 {meta.tag}
               </div>
-
-              {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={cn("text-xs font-black uppercase tracking-wider", meta.color)}>{meta.label} · {offer.title}</span>
@@ -172,15 +160,12 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
                     </span>
                   )}
                   {offer.maxCapMinor && offer.discountType === "PERCENTAGE" && (
-                    <span className="text-[10px] text-muted-foreground">
-                      Max saving ₹{(offer.maxCapMinor / 100).toFixed(0)}
-                    </span>
+                    <span className="text-[10px] text-muted-foreground">Max saving ₹{(offer.maxCapMinor / 100).toFixed(0)}</span>
                   )}
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     {isFirst
                       ? <><CheckCircle className="h-3 w-3 text-emerald-500" /> Unlocked on trip 1</>
-                      : <><Lock className="h-3 w-3" /> Unlocks after trip {offer.unlockTripNumber}</>
-                    }
+                      : <><Lock className="h-3 w-3" /> Unlocks after trip {offer.unlockTripNumber}</>}
                   </span>
                 </div>
               </div>
@@ -197,7 +182,7 @@ function LoyaltyLadder({ offers }: { offers: TripOffer[] }) {
   );
 }
 
-// ── Waitlist button ─────────────────────────────────────────────────────────
+// ── Waitlist button — redirects to login if not authenticated ──────────────
 function WaitlistButton({ tripId }: { tripId: string }) {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -210,6 +195,10 @@ function WaitlistButton({ tripId }: { tripId: string }) {
       body: JSON.stringify({ seats: 1 }),
     });
     setLoading(false);
+    if (res.status === 401) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
     if (res.ok) {
       setJoined(true);
       toast.success("You're on the waitlist — we'll notify you if a seat opens.");
@@ -243,16 +232,14 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
   const depStr = dep.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
   const arrStr = arr.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
   const amenities = Array.isArray(trip.amenities) ? (trip.amenities as string[]) : [];
-
-  const seatsTotal = trip.totalSeats;
   const seatsLeft  = trip.availableSeats;
+  const seatsTotal = trip.totalSeats;
   const seatsPct   = Math.round((seatsLeft / seatsTotal) * 100);
   const seatsUrgent = seatsLeft <= 5;
 
   return (
     <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
       <div className="h-0.5 bg-gradient-to-r from-action via-action/60 to-transparent" />
-
       <div className="p-5">
         {/* Operator row */}
         <div className="flex items-center justify-between mb-4">
@@ -267,9 +254,7 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
           </div>
           <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full">
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
-              {trip.operator.rating.toFixed(1)}
-            </span>
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{trip.operator.rating.toFixed(1)}</span>
           </div>
         </div>
 
@@ -279,7 +264,6 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
             <p className="text-2xl font-extrabold tracking-tight">{depStr}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{trip.route.origin}</p>
           </div>
-
           <div className="flex-1 flex flex-col items-center gap-1">
             <p className="text-xs font-semibold text-muted-foreground">{hours}h {mins}m</p>
             <div className="relative w-full flex items-center">
@@ -293,7 +277,6 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
               <p className="text-[10px] text-muted-foreground">{trip.route.distanceKm} km</p>
             )}
           </div>
-
           <div className="text-right">
             <p className="text-2xl font-extrabold tracking-tight">{arrStr}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{trip.route.destination}</p>
@@ -313,10 +296,7 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
           </div>
           <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className={cn(
-                "h-full rounded-full transition-all",
-                seatsUrgent ? "bg-red-500" : seatsLeft <= 15 ? "bg-amber-400" : "bg-emerald-500"
-              )}
+              className={cn("h-full rounded-full transition-all", seatsUrgent ? "bg-red-500" : seatsLeft <= 15 ? "bg-amber-400" : "bg-emerald-500")}
               style={{ width: `${seatsPct}%` }}
             />
           </div>
@@ -333,15 +313,13 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
 
         {/* Loyalty flash banner + price + CTA */}
         <div className="pt-3 border-t border-border space-y-3">
-          {/* Flashy discount banner */}
           {trip.offers[0] && (
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary/90 to-action px-4 py-3 flex items-center justify-between gap-3">
-              {/* Shimmer overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2.5s_infinite]" />
               <div>
                 <div className="flex items-center gap-1.5">
                   <Gift className="h-3 w-3 text-white/80" />
-                  <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Your Loyalty Deal</p>
+                  <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Loyalty Deal</p>
                 </div>
                 <p className="text-white font-black text-2xl leading-tight">
                   {trip.offers[0].discountType === "PERCENTAGE"
@@ -355,7 +333,7 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-white/60 text-[10px]">Book more → earn more</p>
+                <p className="text-white/60 text-[10px]">Sign in to unlock</p>
                 <div className="flex items-center gap-1 mt-1">
                   {["L1","L2","L3","L4"].map((l, i) => (
                     <div key={l} className={`rounded-full text-[9px] font-black px-1.5 py-0.5 ${i === 0 ? "bg-white text-primary" : "bg-white/20 text-white/60"}`}>{l}</div>
@@ -387,17 +365,12 @@ function TripCard({ trip }: { trip: TripSearchItem }) {
   );
 }
 
-// ── Favourite route button ──────────────────────────────────────────────────
+// ── Favourite route button — gracefully handles unauthenticated state ───────
 function FavoriteRouteButton({
-  origin,
-  destination,
-  favorites,
-  onToggle,
+  origin, destination, favorites, onToggle,
 }: {
-  origin: string;
-  destination: string;
-  favorites: Set<string>;
-  onToggle: (origin: string, destination: string, add: boolean) => void;
+  origin: string; destination: string;
+  favorites: Set<string>; onToggle: (origin: string, destination: string, add: boolean) => void;
 }) {
   const key = `${origin}|${destination}`;
   const isFav = favorites.has(key);
@@ -407,7 +380,8 @@ function FavoriteRouteButton({
     setBusy(true);
     try {
       if (isFav) {
-        await fetch(`/api/favorites/routes?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`, { method: "DELETE" });
+        const r = await fetch(`/api/favorites/routes?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`, { method: "DELETE" });
+        if (r.status === 401) { toast.error("Sign in to manage saved routes"); return; }
         onToggle(origin, destination, false);
         toast.success("Route removed from favourites");
       } else {
@@ -416,6 +390,7 @@ function FavoriteRouteButton({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ origin, destination }),
         });
+        if (r.status === 401) { toast.error("Sign in to save routes"); return; }
         if (!r.ok) { const d = await r.json(); throw new Error(d.error?.message); }
         onToggle(origin, destination, true);
         toast.success("Route saved to favourites");
@@ -428,12 +403,8 @@ function FavoriteRouteButton({
   }
 
   return (
-    <button
-      onClick={toggle}
-      disabled={busy}
-      title={isFav ? "Remove from favourites" : "Save route"}
-      className="p-1 rounded-full transition-colors hover:bg-muted"
-    >
+    <button onClick={toggle} disabled={busy} title={isFav ? "Remove from favourites" : "Save route"}
+      className="p-1 rounded-full transition-colors hover:bg-muted">
       <Star className={cn("h-4 w-4 transition-colors", isFav ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 hover:text-amber-400")} />
     </button>
   );
@@ -443,31 +414,28 @@ function FavoriteRouteButton({
 export default function SearchPage() {
   const searchParams = useSearchParams();
 
-  const [origin, setOrigin]           = useState(searchParams.get("origin") ?? "");
-  const [destination, setDestination] = useState(searchParams.get("destination") ?? "");
+  const [origin, setOrigin]           = useState(searchParams.get("origin") ?? searchParams.get("from") ?? "");
+  const [destination, setDestination] = useState(searchParams.get("destination") ?? searchParams.get("to") ?? "");
   const [date, setDate]               = useState(searchParams.get("date") ?? new Date().toISOString().slice(0, 10));
 
-  const [results, setResults] = useState<TripSearchItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-
-  const [places, setPlaces] = useState<{ origins: string[]; destinations: string[] }>({ origins: [], destinations: [] });
-
-  // Favourite routes: "origin|destination" set
+  const [results, setResults]     = useState<TripSearchItem[]>([]);
+  const [loading, setLoading]     = useState(false);
+  const [searched, setSearched]   = useState(false);
+  const [places, setPlaces]       = useState<{ origins: string[]; destinations: string[] }>({ origins: [], destinations: [] });
   const [favoriteRoutes, setFavoriteRoutes] = useState<Set<string>>(new Set());
 
-  // sort + filter state
-  const [sortKey, setSortKey]       = useState<SortKey>("price-asc");
-  const [depWindows, setDepWindows] = useState<Set<DepartureWindow>>(new Set());
+  const [sortKey, setSortKey]         = useState<SortKey>("price-asc");
+  const [depWindows, setDepWindows]   = useState<Set<DepartureWindow>>(new Set());
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // fetch place list + saved favourites on mount
   useEffect(() => {
+    // Places are public
     fetch("/api/places")
       .then((r) => r.json())
       .then((j) => { if (j.data) setPlaces(j.data); })
       .catch(() => {});
 
+    // Favorites silently no-op if not logged in
     fetch("/api/favorites/routes")
       .then((r) => r.ok ? r.json() : null)
       .then((j) => {
@@ -498,10 +466,9 @@ export default function SearchPage() {
     setLoading(false);
   }
 
-  // auto-search when URL params present
   useEffect(() => {
-    const org  = searchParams.get("origin") ?? "";
-    const dest = searchParams.get("destination") ?? "";
+    const org  = searchParams.get("origin") ?? searchParams.get("from") ?? "";
+    const dest = searchParams.get("destination") ?? searchParams.get("to") ?? "";
     const dt   = searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
     if (org && dest) doSearch(org, dest, dt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -512,10 +479,7 @@ export default function SearchPage() {
     doSearch(origin, destination, date);
   }
 
-  function handleSwap() {
-    setOrigin(destination);
-    setDestination(origin);
-  }
+  function handleSwap() { setOrigin(destination); setDestination(origin); }
 
   function toggleWindow(w: DepartureWindow) {
     setDepWindows((prev) => {
@@ -540,11 +504,12 @@ export default function SearchPage() {
     return arr;
   }, [results, sortKey, depWindows]);
 
-  // all places merged for autocomplete (origins can be destinations and vice versa)
   const allPlaces = useMemo(
     () => [...new Set([...places.origins, ...places.destinations])].sort(),
     [places]
   );
+
+  const filterCount = depWindows.size + (sortKey !== "price-asc" ? 1 : 0);
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -574,51 +539,25 @@ export default function SearchPage() {
     </div>
   );
 
-  const filterCount = depWindows.size + (sortKey !== "price-asc" ? 1 : 0);
-
   return (
     <div className="min-h-screen">
-      {/* Search bar */}
+      {/* Sticky search bar */}
       <div className="bg-white dark:bg-card border-b border-border shadow-sm sticky top-16 z-30">
         <div className="container py-3">
           <form onSubmit={handleSearch} className="flex flex-wrap gap-2 items-end">
-            <PlaceInput
-              value={origin}
-              onChange={setOrigin}
-              placeholder="From"
-              places={allPlaces}
-              icon="origin"
-            />
-
+            <PlaceInput value={origin} onChange={setOrigin} placeholder="From" places={allPlaces} icon="origin" />
             <button
-              type="button"
-              onClick={handleSwap}
+              type="button" onClick={handleSwap}
               className="h-10 w-10 shrink-0 rounded-lg border border-border bg-muted flex items-center justify-center hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
             >
               <ArrowLeftRight className="h-4 w-4" />
             </button>
-
-            <PlaceInput
-              value={destination}
-              onChange={setDestination}
-              placeholder="To"
-              places={allPlaces}
-              icon="destination"
-            />
-
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-10 text-sm w-auto"
-              required
-            />
-
+            <PlaceInput value={destination} onChange={setDestination} placeholder="To" places={allPlaces} icon="destination" />
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 text-sm w-auto" required />
             <Button type="submit" variant="action" disabled={loading} className="h-10 gap-1.5 font-semibold shrink-0">
               <Search className="h-3.5 w-3.5" />
               {loading ? "Searching…" : "Search"}
             </Button>
-
             <button
               type="button"
               onClick={() => setShowMobileFilters(!showMobileFilters)}
@@ -639,7 +578,6 @@ export default function SearchPage() {
 
       <div className="container py-6">
         <div className="flex gap-6 items-start">
-
           {/* Desktop filter sidebar */}
           <aside className="hidden md:block w-56 shrink-0 sticky top-32">
             <div className="bg-white dark:bg-card border border-border rounded-xl p-5">
@@ -656,49 +594,42 @@ export default function SearchPage() {
           </aside>
 
           <div className="flex-1 min-w-0 space-y-4">
-            {/* Mobile filters */}
             {showMobileFilters && (
               <div className="md:hidden bg-white dark:bg-card border border-border rounded-xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <p className="font-bold text-sm">Filters</p>
-                  <button onClick={() => setShowMobileFilters(false)} className="text-muted-foreground">
-                    <X className="h-4 w-4" />
-                  </button>
+                  <button onClick={() => setShowMobileFilters(false)} className="text-muted-foreground"><X className="h-4 w-4" /></button>
                 </div>
                 <FilterPanel />
               </div>
             )}
 
-            {/* Loading skeletons */}
-            {loading && (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
-              </div>
-            )}
+            {loading && <div className="flex justify-center py-16"><BusLoader /></div>}
 
-            {/* Not yet searched */}
             {!loading && !searched && (
-              <div className="text-center py-24 space-y-4">
-                <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-                  <Search className="h-10 w-10 text-muted-foreground/30" />
+              <FadeUp>
+                <div className="text-center py-12 space-y-6">
+                  <BusScene state="stopped" doorsOpen width={420} className="mx-auto" />
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">Ready to roll?</p>
+                    <p className="text-sm text-muted-foreground">Enter origin, destination and date above to see available buses.</p>
+                  </div>
                 </div>
-                <p className="font-bold text-lg">Find your bus</p>
-                <p className="text-sm text-muted-foreground">Enter origin, destination and date above to see available buses.</p>
-              </div>
+              </FadeUp>
             )}
 
-            {/* No results */}
             {!loading && searched && results.length === 0 && (
-              <div className="text-center py-24 space-y-4">
-                <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-                  <Bus className="h-10 w-10 text-muted-foreground/30" />
+              <FadeUp>
+                <div className="text-center py-12 space-y-6">
+                  <BusScene state="departing" width={420} className="mx-auto" />
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">No buses found</p>
+                    <p className="text-sm text-muted-foreground">Looks like the bus just left. Try a different date or route.</p>
+                  </div>
                 </div>
-                <p className="font-bold text-lg">No buses found</p>
-                <p className="text-sm text-muted-foreground">Try a different date or check the spelling of origin / destination.</p>
-              </div>
+              </FadeUp>
             )}
 
-            {/* Results header with favourite-route star */}
             {!loading && filtered.length > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -707,10 +638,8 @@ export default function SearchPage() {
                   </p>
                   {origin && destination && (
                     <FavoriteRouteButton
-                      origin={origin}
-                      destination={destination}
-                      favorites={favoriteRoutes}
-                      onToggle={handleFavToggle}
+                      origin={origin} destination={destination}
+                      favorites={favoriteRoutes} onToggle={handleFavToggle}
                     />
                   )}
                 </div>
@@ -720,8 +649,15 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Bus cards */}
-            {!loading && filtered.map((trip) => <TripCard key={trip.id} trip={trip} />)}
+            {!loading && filtered.length > 0 && (
+              <StaggerList className="space-y-4">
+                {filtered.map((trip) => (
+                  <StaggerItem key={trip.id}>
+                    <TripCard trip={trip} />
+                  </StaggerItem>
+                ))}
+              </StaggerList>
+            )}
           </div>
         </div>
       </div>

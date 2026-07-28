@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Bus, ArrowRight, Users, CheckCircle, Lock, ChevronRight, ArrowLeft, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { BusLoader, RouteProgress } from "@/components/ui/animated-bus";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface SeatInfo { id: string; label: string; deck: string; isBooked: boolean; isLadies: boolean; priceMinor: number }
@@ -742,11 +743,8 @@ export default function BookTripPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-6 space-y-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-2 w-full" />
-        <Skeleton className="h-56 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-16 flex justify-center">
+        <BusLoader />
       </div>
     );
   }
@@ -779,38 +777,63 @@ export default function BookTripPage() {
         </p>
       </div>
 
+      {/* Bus route progress */}
+      <RouteProgress
+        stops={[
+          { label: "Your Deal", sublabel: "Loyalty offer" },
+          { label: "Choose Seats", sublabel: "Pick your spot" },
+          { label: "Passengers", sublabel: "Traveller info" },
+        ]}
+        current={step}
+      />
+
       <StepBar step={step} />
 
-      {step === 0 && (
-        <StepDeal
-          trip={trip}
-          offers={offers}
-          progress={progress}
-          onNext={() => setStep(1)}
-        />
-      )}
-      {step === 1 && (
-        <StepSeats
-          trip={trip}
-          selectedSeats={selectedSeats}
-          onToggle={toggleSeat}
-          onNext={() => setStep(2)}
-          onBack={() => setStep(0)}
-        />
-      )}
-      {step === 2 && (
-        <StepPassengers
-          trip={trip}
-          selectedSeats={selectedSeats}
-          passengers={passengers}
-          offers={offers}
-          progress={progress}
-          onChange={updatePassenger}
-          onSubmit={handleSubmit}
-          onBack={() => setStep(1)}
-          submitting={submitting}
-        />
-      )}
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <motion.div
+            key="step-deal"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepDeal trip={trip} offers={offers} progress={progress} onNext={() => setStep(1)} />
+          </motion.div>
+        )}
+        {step === 1 && (
+          <motion.div
+            key="step-seats"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepSeats trip={trip} selectedSeats={selectedSeats} onToggle={toggleSeat} onNext={() => setStep(2)} onBack={() => setStep(0)} />
+          </motion.div>
+        )}
+        {step === 2 && (
+          <motion.div
+            key="step-passengers"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepPassengers
+              trip={trip}
+              selectedSeats={selectedSeats}
+              passengers={passengers}
+              offers={offers}
+              progress={progress}
+              onChange={updatePassenger}
+              onSubmit={handleSubmit}
+              onBack={() => setStep(1)}
+              submitting={submitting}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

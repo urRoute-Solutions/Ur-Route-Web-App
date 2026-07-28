@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Bus, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BookingDTO } from "@/dto/booking.dto";
+import { BusLoader } from "@/components/ui/animated-bus";
+import { StaggerList, StaggerItem, FadeUp } from "@/components/motion/primitives";
 
 const STATUS_TABS = [
   { value: "", label: "All" },
@@ -92,32 +93,32 @@ export default function BookingsPage() {
 
       <div className="container py-6">
         {loading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full rounded-xl" />
-            ))}
+          <div className="flex justify-center py-16">
+            <BusLoader />
           </div>
         ) : bookings.length === 0 ? (
           /* Empty state */
-          <div className="text-center py-24 space-y-4">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-              <Bus className="h-10 w-10 text-muted-foreground/25" />
+          <FadeUp>
+            <div className="text-center py-24 space-y-4">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+                <Bus className="h-10 w-10 text-muted-foreground/25" />
+              </div>
+              <p className="font-bold text-lg">No bookings found</p>
+              <p className="text-sm text-muted-foreground max-w-[300px] mx-auto">
+                {status
+                  ? `You have no ${status.toLowerCase()} bookings.`
+                  : "You haven't booked any trips yet. Find your next journey!"}
+              </p>
+              <Link href="/search">
+                <Button variant="action" className="mt-2 font-semibold">Search buses</Button>
+              </Link>
             </div>
-            <p className="font-bold text-lg">No bookings found</p>
-            <p className="text-sm text-muted-foreground max-w-[300px] mx-auto">
-              {status
-                ? `You have no ${status.toLowerCase()} bookings.`
-                : "You haven't booked any trips yet. Find your next journey!"}
-            </p>
-            <Link href="/search">
-              <Button variant="action" className="mt-2 font-semibold">Search buses</Button>
-            </Link>
-          </div>
+          </FadeUp>
         ) : (
-          <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
+          <StaggerList className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
             {bookings.map((b, idx) => (
+              <StaggerItem key={b.id}>
               <Link
-                key={b.id}
                 href={`/bookings/${b.id}`}
                 className={cn(
                   "flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group",
@@ -157,6 +158,7 @@ export default function BookingsPage() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </div>
               </Link>
+              </StaggerItem>
             ))}
 
             {total > 20 && (
@@ -164,7 +166,7 @@ export default function BookingsPage() {
                 <p className="text-xs text-muted-foreground">Showing 20 of {total} bookings</p>
               </div>
             )}
-          </div>
+          </StaggerList>
         )}
       </div>
     </div>
