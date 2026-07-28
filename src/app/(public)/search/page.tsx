@@ -1,7 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
+import { Suspense } from "react";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -322,7 +321,7 @@ function FavoriteRouteButton({
   );
 }
 
-export default function SearchPage() {
+function SearchPageInner() {
   const searchParams = useSearchParams();
 
   const [origin, setOrigin]           = useState(searchParams.get("origin") ?? searchParams.get("from") ?? "");
@@ -531,5 +530,18 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center py-32 text-muted-foreground">
+        <Bus className="h-5 w-5 animate-pulse mr-2" />
+        <span className="text-sm animate-pulse">Loading…</span>
+      </div>
+    }>
+      <SearchPageInner />
+    </Suspense>
   );
 }
