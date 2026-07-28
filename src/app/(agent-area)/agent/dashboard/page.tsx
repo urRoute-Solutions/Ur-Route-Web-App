@@ -1,6 +1,6 @@
 import { requireAgent } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { Ticket, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Ticket, CheckCircle, Clock, AlertCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -90,9 +90,14 @@ export default async function AgentDashboardPage() {
               </Link>
             ))}
           </div>
-          <Link href="/agent/tickets" className="mt-3 inline-block text-xs text-blue-400 hover:text-blue-300 hover:underline">
-            View all →
-          </Link>
+          <div className="mt-3 flex items-center gap-4">
+            <Link href="/agent/tickets" className="text-xs text-blue-400 hover:text-blue-300 hover:underline">
+              View all tickets →
+            </Link>
+            <Link href="/agent/users" className="flex items-center gap-1 text-xs text-slate-400 hover:text-white hover:underline">
+              <Users className="h-3 w-3" /> Search users
+            </Link>
+          </div>
         </div>
       )}
 
@@ -101,6 +106,9 @@ export default async function AgentDashboardPage() {
           <Ticket className="mx-auto h-10 w-10 text-slate-600 mb-3" />
           <p className="text-slate-300 font-semibold">No active tickets</p>
           <p className="text-slate-500 text-sm mt-1">Go online to start receiving tickets.</p>
+          <Link href="/agent/users" className="mt-4 inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 hover:underline">
+            <Users className="h-3 w-3" /> Search users
+          </Link>
         </div>
       )}
     </div>
