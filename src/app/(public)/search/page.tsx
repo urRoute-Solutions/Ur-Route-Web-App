@@ -8,7 +8,7 @@ import { Search, MapPin, Bus, ArrowRight, Star, ArrowLeftRight, SlidersHorizonta
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { TripSearchItem } from "@/usecases/trips/search-trips.usecase";
+import type { TripSearchItem, TripOffer } from "@/usecases/trips/search-trips.usecase";
 
 type SortKey = "price-asc" | "price-desc" | "duration";
 type DepartureWindow = "morning" | "afternoon" | "evening" | "night";
