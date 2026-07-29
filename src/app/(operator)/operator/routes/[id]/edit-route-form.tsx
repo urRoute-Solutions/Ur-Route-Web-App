@@ -99,13 +99,13 @@ export function EditRouteForm({ routeId, operatorId, initial }: Props) {
     operatorName,
     origin: form.origin,
     destination: form.destination,
-    distanceKm: form.distanceKm ? parseInt(form.distanceKm) : undefined,
-    fareRupees: form.fareRupees ? parseFloat(form.fareRupees) : undefined,
+    distanceKm: form.distanceKm,
+    fareRupees: form.fareRupees,
     departureTime: form.departureTime,
     arrivalTime: form.arrivalTime,
     availableFrom: form.availableFrom,
     availableUntil: form.availableUntil,
-    durationMinutes: durationMinutes ?? undefined,
+    durationMinutes,
   };
 
   return (
@@ -135,14 +135,8 @@ export function EditRouteForm({ routeId, operatorId, initial }: Props) {
         <CardContent>
           <form onSubmit={handleSave} className="space-y-5">
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Origin city <span className="text-destructive">*</span></Label>
-                <CityAutocomplete value={form.origin} onChange={(v) => set("origin", v)} placeholder="e.g. Chennai" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Destination city <span className="text-destructive">*</span></Label>
-                <CityAutocomplete value={form.destination} onChange={(v) => set("destination", v)} placeholder="e.g. Bengaluru" />
-              </div>
+              <CityAutocomplete label="Origin city" value={form.origin} onChange={(v) => set("origin", v)} placeholder="e.g. Chennai" />
+              <CityAutocomplete label="Destination city" value={form.destination} onChange={(v) => set("destination", v)} placeholder="e.g. Bengaluru" />
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
@@ -160,13 +154,9 @@ export function EditRouteForm({ routeId, operatorId, initial }: Props) {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
+              <TimeField label="Departure time" value={form.departureTime} onChange={(v) => set("departureTime", v)} />
               <div className="space-y-1.5">
-                <Label>Departure time <span className="text-destructive">*</span></Label>
-                <TimeField value={form.departureTime} onChange={(v) => set("departureTime", v)} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Arrival time <span className="text-destructive">*</span></Label>
-                <TimeField value={form.arrivalTime} onChange={(v) => set("arrivalTime", v)} required />
+                <TimeField label="Arrival time" value={form.arrivalTime} onChange={(v) => set("arrivalTime", v)} />
                 {durationMinutes != null && (
                   <p className="text-xs text-muted-foreground">
                     Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m
@@ -177,14 +167,8 @@ export function EditRouteForm({ routeId, operatorId, initial }: Props) {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Available from <span className="text-destructive">*</span></Label>
-                <DateField value={form.availableFrom} onChange={(v) => set("availableFrom", v)} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Available until <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <DateField value={form.availableUntil} onChange={(v) => set("availableUntil", v)} />
-              </div>
+              <DateField label="Available from" value={form.availableFrom} onChange={(v) => set("availableFrom", v)} />
+              <DateField label="Available until" value={form.availableUntil} onChange={(v) => set("availableUntil", v)} optional />
             </div>
 
             <div className="flex items-center gap-2">
